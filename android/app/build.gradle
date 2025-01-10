@@ -1,0 +1,293 @@
+// plugins {
+//     id "com.android.application"
+//     // START: FlutterFire Configuration
+//     id 'com.google.gms.google-services'
+//     // END: FlutterFire Configuration
+//     id "kotlin-android"
+//     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+//     id "dev.flutter.flutter-gradle-plugin"
+// }
+
+// android {
+//     namespace = "com.example.regaproject"
+//     compileSdk = flutter.compileSdkVersion
+//     // ndkVersion = flutter.ndkVersion
+
+//     compileOptions {
+//         sourceCompatibility = JavaVersion.VERSION_1_8
+//         targetCompatibility = JavaVersion.VERSION_1_8
+//     }
+
+//     kotlinOptions {
+//         jvmTarget = JavaVersion.VERSION_1_8 
+//     }
+
+//     defaultConfig {
+//         ndk {
+//             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+//         }
+
+
+//         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+//         applicationId = "com.example.regaproject"
+//         // You can update the following values to match your application needs.
+//         // For more information, see: https://flutter.dev/to/review-gradle-config.
+//         minSdk = 24
+//         targetSdk = flutter.targetSdkVersion
+//         versionCode = flutter.versionCode
+//         versionName = flutter.versionName
+        
+//     }
+
+//     buildTypes {
+//         release {
+//             // TODO: Add your own signing config for the release build.
+//             // Signing with the debug keys for now, so `flutter run --release` works.
+//             signingConfig = signingConfigs.debug
+//         }
+//     }
+
+//     dependencies {
+
+//     // Kotlin lang
+//     implementation 'androidx.core:core-ktx:1.8.0'
+
+//     // App compat and UI things
+//     implementation 'androidx.appcompat:appcompat:1.5.1'
+//     implementation 'com.google.android.material:material:1.7.0'
+//     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+//     implementation 'androidx.fragment:fragment-ktx:1.5.4'
+
+//     // Navigation library
+//     def nav_version = "2.5.3"
+//     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+//     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+
+//     // CameraX core library
+//     def camerax_version = '1.2.0-alpha02'
+//     implementation "androidx.camera:camera-core:$camerax_version"
+
+//     // CameraX Camera2 extensions
+//     implementation "androidx.camera:camera-camera2:$camerax_version"
+
+//     // CameraX Lifecycle library
+//     implementation "androidx.camera:camera-lifecycle:$camerax_version"
+
+//     // CameraX View class
+//     implementation "androidx.camera:camera-view:$camerax_version"
+
+//     // WindowManager
+//     implementation 'androidx.window:window:1.1.0-alpha03'
+
+//     // Unit testing
+//     testImplementation 'junit:junit:4.13.2'
+
+//     // Instrumented testing
+//     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+//     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+//     // MediaPipe Library
+//     implementation 'com.google.mediapipe:tasks-vision:latest.release'
+
+
+// }
+
+
+
+// }
+
+// flutter {
+//     source = "../.."
+// }
+
+
+// plugins {
+//     id "com.android.application"
+//     id 'com.google.gms.google-services'
+//     id "kotlin-android"
+//     id "dev.flutter.flutter-gradle-plugin"
+//     id 'de.undercouch.download' // เพิ่ม Plugin สำหรับดาวน์โหลดไฟล์
+// }
+
+// android {
+//     namespace = "com.example.regaproject"
+//     compileSdk = flutter.compileSdkVersion
+
+//     compileOptions {
+//         sourceCompatibility = JavaVersion.VERSION_1_8
+//         targetCompatibility = JavaVersion.VERSION_1_8
+//     }
+
+//     kotlinOptions {
+//         jvmTarget = JavaVersion.VERSION_1_8
+//     }
+
+//     defaultConfig {
+//         ndk {
+//             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+//         }
+
+//         applicationId = "com.example.regaproject"
+//         minSdk = 24
+//         targetSdk = flutter.targetSdkVersion
+//         versionCode = flutter.versionCode
+//         versionName = flutter.versionName
+//     }
+
+//     buildTypes {
+//         release {
+//             signingConfig = signingConfigs.debug
+//         }
+//     }
+
+//     // เพิ่ม task สำหรับการดาวน์โหลดไฟล์
+//     dependencies {
+//         // Kotlin lang
+//         implementation 'androidx.core:core-ktx:1.8.0'
+
+//         // App compat and UI things
+//         implementation 'androidx.appcompat:appcompat:1.5.1'
+//         implementation 'com.google.android.material:material:1.7.0'
+//         implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+//         implementation 'androidx.fragment:fragment-ktx:1.5.4'
+
+//         // Navigation library
+//         def nav_version = "2.5.3"
+//         implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+//         implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+
+//         // CameraX core library
+//         def camerax_version = '1.2.0-alpha02'
+//         implementation "androidx.camera:camera-core:$camerax_version"
+
+//         // CameraX Camera2 extensions
+//         implementation "androidx.camera:camera-camera2:$camerax_version"
+
+//         // CameraX Lifecycle library
+//         implementation "androidx.camera:camera-lifecycle:$camerax_version"
+
+//         // CameraX View class
+//         implementation "androidx.camera:camera-view:$camerax_version"
+
+//         // WindowManager
+//         implementation 'androidx.window:window:1.1.0-alpha03'
+
+//         // Unit testing
+//         testImplementation 'junit:junit:4.13.2'
+
+//         // Instrumented testing
+//         androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+//         androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+//         // MediaPipe Library
+//         implementation 'com.google.mediapipe:tasks-vision:latest.release'
+//     }
+// }
+
+// // ใช้ task สำหรับดาวน์โหลดไฟล์ MediaPipe
+// project.ext.ASSET_DIR = projectDir.toString() + '/src/main/assets'
+// apply from: 'download_tasks.gradle'
+// flutter {
+//     source = "../.."
+// }
+
+
+
+plugins {
+    id "com.android.application"
+    id 'com.google.gms.google-services'
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+    // Plugin สำหรับดาวน์โหลดไฟล์ (ถ้าต้องการใช้งานดาวน์โหลด model)
+    id 'de.undercouch.download'
+}
+
+android {
+    namespace = "com.example.regaproject"
+    compileSdk = flutter.compileSdkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "com.example.regaproject"
+        minSdk = 24
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+
+        // ถ้าต้องการรองรับ Emulator หรือ Device หลายแบบ พร้อม .so หลาย ABI
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+        }
+    }
+
+    // สำหรับ Flutter
+    // flutter {
+    //     source = "../.."
+    // }
+
+    // กรณีถ้าต้องการ assets folder (สำหรับเก็บ model/.task ไฟล์ดาวน์โหลด)
+    // กรณีต้องการ load ไฟล์ผ่าน MediaPipe .task
+    sourceSets {
+        main {
+            assets.srcDirs += "src/main/assets"
+        }
+    }
+}
+
+// Dependencies
+dependencies {
+    // Kotlin lang
+    implementation 'androidx.core:core-ktx:1.8.0'
+
+    // App compat and UI things
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'com.google.android.material:material:1.7.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.fragment:fragment-ktx:1.5.4'
+
+    // Navigation library
+    def nav_version = "2.5.3"
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+
+    // CameraX core library
+    def camerax_version = "1.4.0" // หรือเวอร์ชันอื่นที่รองรับ PreviewView
+    implementation "androidx.camera:camera-core:$camerax_version"
+    implementation "androidx.camera:camera-camera2:$camerax_version"
+    implementation "androidx.camera:camera-lifecycle:$camerax_version"
+    implementation "androidx.camera:camera-view:$camerax_version"   // <-- สำคัญ
+
+    // WindowManager
+    implementation 'androidx.window:window:1.1.0-alpha03'
+
+    // Unit testing
+    testImplementation 'junit:junit:4.13.2'
+
+    // Instrumented testing
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+    // MediaPipe Tasks Vision
+    implementation 'com.google.mediapipe:tasks-vision:latest.release'
+
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.1"
+    implementation "androidx.lifecycle:lifecycle-process:2.6.1"
+}
+
+// ตัวนี้เรียกไฟล์ download_tasks.gradle มาประมวลผล (ถ้ามี)
+project.ext.ASSET_DIR = "${projectDir}/src/main/assets"
+apply from: 'download_tasks.gradle'
