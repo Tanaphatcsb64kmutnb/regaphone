@@ -13,12 +13,27 @@ import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+import android.util.Size
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.Callback
+import okhttp3.Call
+import okhttp3.Response
+import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+import io.flutter.plugin.common.MethodChannel
+import org.json.JSONArray
 
 class PoseLandmarkerHelper(
     private val context: Context,
+    private val methodChannel: MethodChannel,
     private val runningMode: RunningMode = RunningMode.LIVE_STREAM,
     private val poseLandmarkerHelperListener: LandmarkerListener? = null
 ) {
@@ -27,6 +42,15 @@ class PoseLandmarkerHelper(
     private val mainThreadHandler = Handler(Looper.getMainLooper())
     private val backgroundExecutor: Executor = Executors.newSingleThreadExecutor()
     private val isProcessing = AtomicBoolean(false)
+    private var lastProcessedTime = 0L
+    private val PROCESS_INTERVAL = 500L // 500ms interval between predictions
+    private val isProcessingHttp = AtomicBoolean(false)
+
+    // เพิ่ม OkHttpClient สำหรับการส่ง HTTP requests
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(1, TimeUnit.SECONDS)
+        .readTimeout(1, TimeUnit.SECONDS)
+        .build()
 
     init {
         setupPoseLandmarker()
@@ -57,6 +81,14 @@ class PoseLandmarkerHelper(
                                     input.width
                                 )
                             )
+                            // Send landmarks to Flask after processing
+                            result.landmarks().firstOrNull()?.let { landmarks ->
+                                val currentTime = System.currentTimeMillis()
+                                if (currentTime - lastProcessedTime >= PROCESS_INTERVAL) {
+                                    sendLandmarksToFlask(landmarks)
+                                    lastProcessedTime = currentTime
+                                }
+                            }
                         }
                     }
                     .setErrorListener { error ->
@@ -75,6 +107,66 @@ class PoseLandmarkerHelper(
             )
         }
     }
+
+    private fun sendLandmarksToFlask(landmarks: List<NormalizedLandmark>) {
+    // เพิ่ม log เพื่อตรวจสอบข้อมูล
+    Log.d("PoseLandmarker", "Sending landmarks: ${landmarks.size}")
+
+    if (isProcessingHttp.get()) return
+    isProcessingHttp.set(true)
+
+    try {
+        val keypointsArray = JSONArray()
+        landmarks.forEach { landmark ->
+            keypointsArray.put(landmark.x().toDouble())
+            keypointsArray.put(landmark.y().toDouble())
+            keypointsArray.put(landmark.z().toDouble())
+        }
+
+        // เพิ่ม log ตรวจสอบ JSON
+        val json = JSONObject()
+        json.put("keypoints", keypointsArray)
+        Log.d("PoseLandmarker", "Sending JSON: ${json}")
+
+        val mediaType = "application/json".toMediaType()
+        val requestBody = RequestBody.create(mediaType, json.toString())
+
+        val request = Request.Builder()
+            .url("http://192.168.1.38:5000/predict")  
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                try {
+                    val responseData = JSONObject(response.body?.string() ?: "{}")
+                    Log.d("PoseLandmarker", "Response: ${responseData}")
+                    
+                    val prediction = mapOf(
+                        "pose" to responseData.getString("predicted_pose"),
+                        "confidence" to responseData.getDouble("confidence")
+                    )
+
+                    mainThreadHandler.post {
+                        methodChannel.invokeMethod("onPosePredicted", prediction)
+                    }
+                } catch (e: Exception) {
+                    Log.e("PoseLandmarker", "Error parsing response: ${e.message}")
+                } finally {
+                    isProcessingHttp.set(false)
+                }
+            }
+
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("PoseLandmarker", "Request failed: ${e.message}")
+                isProcessingHttp.set(false)
+            }
+        })
+    } catch (e: Exception) {
+        Log.e("PoseLandmarker", "Error sending landmarks: ${e.message}")
+        isProcessingHttp.set(false)
+    }
+}
 
     fun detectLiveStream(imageProxy: ImageProxy, isFrontCamera: Boolean) {
         // Quick exit conditions
@@ -147,7 +239,6 @@ class PoseLandmarkerHelper(
         }
     }
 
-    // Result bundle for passing detection results
     data class ResultBundle(
         val results: List<PoseLandmarkerResult>,
         val inferenceTime: Long,
@@ -155,7 +246,6 @@ class PoseLandmarkerHelper(
         val inputImageWidth: Int
     )
 
-    // Listener interface for pose detection results
     interface LandmarkerListener {
         fun onError(error: String)
         fun onResults(resultBundle: ResultBundle)

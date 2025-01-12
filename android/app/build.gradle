@@ -290,6 +290,9 @@ dependencies {
 
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.1"
     implementation "androidx.lifecycle:lifecycle-process:2.6.1"
+
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'org.json:json:20210307'
 }
 
 // ตัวนี้เรียกไฟล์ download_tasks.gradle มาประมวลผล (ถ้ามี)

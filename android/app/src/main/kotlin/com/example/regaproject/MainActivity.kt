@@ -1,5 +1,3 @@
-// MainActivity.kt
-
 package com.example.regaproject
 
 import android.content.Intent
@@ -11,19 +9,22 @@ import android.app.Activity
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "live_camera_view"
     private val VIDEO_REQUEST_CODE = 1001
+    private lateinit var methodChannel: MethodChannel
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
 
         flutterEngine
             .platformViewsController
             .registry
             .registerViewFactory(
                 "live_camera_view",
-                LiveCameraViewFactory()
+                LiveCameraViewFactory(methodChannel)
             )
 
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "switchCamera" -> {
                     val isFrontCamera = call.argument<Boolean>("camera") ?: true
@@ -47,8 +48,7 @@ class MainActivity : FlutterActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         
         if (requestCode == VIDEO_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val channel = MethodChannel(flutterEngine?.dartExecutor?.binaryMessenger!!, CHANNEL)
-            channel.invokeMethod("videoCompleted", null)
+            methodChannel.invokeMethod("videoCompleted", null)
         }
     }
 }

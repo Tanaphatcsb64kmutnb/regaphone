@@ -1,4 +1,4 @@
-package com.example.regaproject 
+package com.example.regaproject
 
 import android.content.Context
 import android.util.Log
@@ -10,6 +10,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.flutter.plugin.platform.PlatformView
+import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import android.util.Size
@@ -18,6 +19,7 @@ import com.google.mediapipe.tasks.vision.core.RunningMode
 
 class LiveCameraPlatformView(
     private val context: Context,
+    private val methodChannel: MethodChannel,
     private var isFrontCamera: Boolean
 ) : PlatformView {
 
@@ -30,7 +32,6 @@ class LiveCameraPlatformView(
     init {
         container = FrameLayout(context)
 
-        // Create PreviewView with TextureView
         previewView = PreviewView(context).apply {
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE 
             layoutParams = FrameLayout.LayoutParams(
@@ -39,7 +40,6 @@ class LiveCameraPlatformView(
             )
         }
 
-        // Create OverlayView
         overlayView = OverlayView(context, null).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -48,11 +48,8 @@ class LiveCameraPlatformView(
             setBackgroundColor(android.graphics.Color.TRANSPARENT)
         }
 
-        // Add views to container
         container.addView(previewView)
         container.addView(overlayView)
-        
-        // Ensure overlay is on top
         overlayView.bringToFront()
         container.invalidate()
 
@@ -60,6 +57,7 @@ class LiveCameraPlatformView(
 
         poseLandmarkerHelper = PoseLandmarkerHelper(
             context = context,
+            methodChannel = methodChannel,
             poseLandmarkerHelperListener = object : PoseLandmarkerHelper.LandmarkerListener {
                 override fun onError(error: String) {
                     Log.e("LiveCameraPlatformView", error)

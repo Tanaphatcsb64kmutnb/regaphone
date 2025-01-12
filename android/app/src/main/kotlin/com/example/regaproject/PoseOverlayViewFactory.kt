@@ -1,3 +1,4 @@
+//D:\regaphone - Copy (2)\Rega-Project\regaproject\android\app\src\main\kotlin\com\example\regaproject\PoseOverlayViewFactory.kt
 package com.example.regaproject
 
 import android.content.Context
@@ -7,7 +8,7 @@ import io.flutter.plugin.platform.PlatformViewFactory
 import io.flutter.plugin.common.StandardMessageCodec
 
 class PoseOverlayViewFactory : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
-    override fun create(context: Context, id: Int, args: Any?): PlatformView {
+    override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
         return PoseOverlayPlatformView(context)
     }
 }
