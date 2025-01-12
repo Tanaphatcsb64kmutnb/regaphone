@@ -1,88 +1,106 @@
-//overlay
 package com.example.regaproject
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
-import android.view.View
-import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
+import android.view.SurfaceView
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
+import android.view.SurfaceHolder
+import android.graphics.PorterDuff
+import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 
-class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
-
-    private var results: PoseLandmarkerResult? = null
-
-    private var imageWidth: Int = 1
-    private var imageHeight: Int = 1
-
-    private var scaleX = 1f
-    private var scaleY = 1f
+class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context, attrs), SurfaceHolder.Callback {
+    private var currentResult: PoseLandmarkerResult? = null
 
     private val pointPaint = Paint().apply {
         color = Color.YELLOW
         strokeWidth = 12f
         style = Paint.Style.FILL
+        isAntiAlias = true
     }
 
     private val linePaint = Paint().apply {
         color = Color.RED
         strokeWidth = 8f
         style = Paint.Style.STROKE
+        isAntiAlias = true
+        strokeCap = Paint.Cap.ROUND
     }
 
-    fun setOverlaySettings(pointColor: String, lineColor: String, pointSize: Float) {
-        pointPaint.color = Color.parseColor(pointColor)
-        linePaint.color = Color.parseColor(lineColor)
-        pointPaint.strokeWidth = pointSize
+    init {
+        setZOrderOnTop(true)
+        holder.setFormat(PixelFormat.TRANSPARENT)
+        holder.addCallback(this)
+        setWillNotDraw(false)
     }
 
+    @Synchronized
     fun setResults(
         poseLandmarkerResults: PoseLandmarkerResult,
         imageHeight: Int,
         imageWidth: Int
     ) {
-        this.results = poseLandmarkerResults
-        this.imageHeight = imageHeight
-        this.imageWidth = imageWidth
-
-        scaleX = width.toFloat() / this.imageWidth
-        scaleY = height.toFloat() / this.imageHeight
-
-        invalidate() // ขอให้ onDraw() เกิดทันที
+        if (!holder.surface.isValid) return
+        
+        currentResult = poseLandmarkerResults
+        
+        // Post drawing to avoid blocking
+        post { drawOverlay() }
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        val poseResult = results ?: return
+    private fun drawOverlay() {
+        if (!holder.surface.isValid || currentResult == null) return
+        
+        val canvas = holder.lockCanvas()
+        try {
+            // Clear previous drawing
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+            
+            currentResult?.let { poseResult ->
+                poseResult.landmarks().firstOrNull()?.let { landmarks ->
+                    // Draw connections
+                    PoseLandmarker.POSE_LANDMARKS.forEach { connection ->
+                        if (connection != null) {
+                            val start = landmarks[connection.start()]
+                            val end = landmarks[connection.end()]
+                            
+                            canvas.drawLine(
+                                start.x() * width,
+                                start.y() * height,
+                                end.x() * width,
+                                end.y() * height,
+                                linePaint
+                            )
+                        }
+                    }
 
-        val allPoseLandmarks = poseResult.landmarks()
-        allPoseLandmarks.forEach { landmarks ->
-            // วาดจุด
-            for (lm in landmarks) {
-                val x = lm.x() * imageWidth * scaleX
-                val y = lm.y() * imageHeight * scaleY
-                canvas.drawCircle(x, y, 8f, pointPaint)
+                    // Draw points
+                    landmarks.forEach { landmark ->
+                        canvas.drawCircle(
+                            landmark.x() * width,
+                            landmark.y() * height,
+                            10f,
+                            pointPaint
+                        )
+                    }
+                }
             }
-
-            // วาดเส้นเชื่อมโครงกระดูก
-            PoseLandmarker.POSE_LANDMARKS.forEach { connection ->
-                val start = landmarks[connection!!.start()]
-                val end = landmarks[connection.end()]
-
-                val startX = start.x() * imageWidth * scaleX
-                val startY = start.y() * imageHeight * scaleY
-                val endX = end.x() * imageWidth * scaleX
-                val endY = end.y() * imageHeight * scaleY
-
-                canvas.drawLine(startX, startY, endX, endY, linePaint)
-            }
+        } finally {
+            // Always unlock canvas
+            holder.unlockCanvasAndPost(canvas)
         }
     }
 
-    fun clear() {
-        results = null
-        invalidate()
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        // Initial setup if needed
+    }
+
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        // Handle surface changes
+    }
+
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        // Cleanup if needed
+        currentResult = null
     }
 }

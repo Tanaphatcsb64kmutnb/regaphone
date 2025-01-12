@@ -88,6 +88,19 @@ flutter:
     - assets/pose_landmarker_full.task
     - assets/pose_landmarker_lite.task
     - assets/img/officesyndrome.jpg
+    - assets/img/butterfly.png
+    - assets/img/Child.png
+    - assets/img/Savasana.png
+    - assets/img/Paschimottanasana.png
+    - assets/img/Sukhasana.png
+    - assets/img/bloodpressure.png
+    - assets/img/heartdisease.png
+    - assets/img/Armpain.png
+    - assets/img/Backpain.png
+    - assets/img/LegPain.png
+    - assets/img/NeckPain.png
+
+
 
 
   # To add assets to your application, add an assets section, like this:

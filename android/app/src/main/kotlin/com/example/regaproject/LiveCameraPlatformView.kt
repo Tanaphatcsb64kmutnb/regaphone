@@ -1,4 +1,3 @@
-//LiveCameraPlatformView.kt
 package com.example.regaproject 
 
 import android.content.Context
@@ -14,8 +13,8 @@ import io.flutter.plugin.platform.PlatformView
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import android.util.Size
+import android.view.ViewGroup
 import com.google.mediapipe.tasks.vision.core.RunningMode
-
 
 class LiveCameraPlatformView(
     private val context: Context,
@@ -24,7 +23,6 @@ class LiveCameraPlatformView(
 
     private val container: FrameLayout
     private val cameraExecutor: ExecutorService
-
     private lateinit var previewView: PreviewView
     private lateinit var overlayView: OverlayView
     private lateinit var poseLandmarkerHelper: PoseLandmarkerHelper
@@ -32,38 +30,39 @@ class LiveCameraPlatformView(
     init {
         container = FrameLayout(context)
 
+        // Create PreviewView with TextureView
         previewView = PreviewView(context).apply {
-            this.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE 
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
         }
 
-        overlayView = OverlayView(context, null)
-        overlayView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        // Create OverlayView
+        overlayView = OverlayView(context, null).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        }
 
-        container.addView(
-            previewView,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        )
-        container.addView(
-            overlayView,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        )
+        // Add views to container
+        container.addView(previewView)
+        container.addView(overlayView)
+        
+        // Ensure overlay is on top
+        overlayView.bringToFront()
+        container.invalidate()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         poseLandmarkerHelper = PoseLandmarkerHelper(
             context = context,
-            runningMode = RunningMode.LIVE_STREAM,
-            currentModel = PoseLandmarkerHelper.MODEL_POSE_LANDMARKER_LITE,
-            currentDelegate = PoseLandmarkerHelper.DELEGATE_GPU,
             poseLandmarkerHelperListener = object : PoseLandmarkerHelper.LandmarkerListener {
                 override fun onError(error: String) {
-                    Log.e("LiveCameraPlatformView", "Mediapipe Error: $error")
+                    Log.e("LiveCameraPlatformView", error)
                 }
 
                 override fun onResults(resultBundle: PoseLandmarkerHelper.ResultBundle) {
@@ -74,7 +73,7 @@ class LiveCameraPlatformView(
                             resultBundle.inputImageHeight,
                             resultBundle.inputImageWidth
                         )
-                        overlayView.invalidate()
+                        overlayView.bringToFront()
                     }
                 }
             }
@@ -95,25 +94,21 @@ class LiveCameraPlatformView(
         cameraProvider.unbindAll()
 
         val preview = Preview.Builder()
+            .setTargetResolution(Size(640, 480))
             .build()
             .also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
         val imageAnalysis = ImageAnalysis.Builder()
-            // ลด resolution เพื่อให้ Mediapipe ทำงานเร็วขึ้น
             .setTargetResolution(Size(640, 480))
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-
-        imageAnalysis.setAnalyzer(cameraExecutor) { imageProxy ->
-            Log.d("LiveCamera", "Analyzer received a frame. width=${imageProxy.width}, height=${imageProxy.height}")
-            try {
-                poseLandmarkerHelper.detectLiveStream(imageProxy, isFrontCamera)
-            } catch (e: Exception) {
-                Log.e("LiveCamera", "Error analyzing frame: ${e.message}")
+            .also {
+                it.setAnalyzer(cameraExecutor) { imageProxy ->
+                    poseLandmarkerHelper.detectLiveStream(imageProxy, isFrontCamera)
+                }
             }
-        }
 
         val cameraSelector = if (isFrontCamera) {
             CameraSelector.DEFAULT_FRONT_CAMERA
@@ -131,8 +126,6 @@ class LiveCameraPlatformView(
         } catch (exc: Exception) {
             Log.e("LiveCamera", "Use case binding failed", exc)
         }
-
-        overlayView.post { overlayView.bringToFront() }
     }
 
     override fun getView(): View {

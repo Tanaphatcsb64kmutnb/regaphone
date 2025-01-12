@@ -31,13 +31,14 @@ class PoseDetailPage extends StatelessWidget {
           final poseName = poseData['Name'] ?? 'No Name';
           final poseDescription = poseData['Description'] ?? 'No Description';
           final poseTime = poseData['Timeup'] ?? 0;
+          final posePicture = poseData['Picture'] ?? '';
 
           return Stack(
             children: [
-              // พื้นหลัง
+              // รูปภาพพื้นหลัง
               Positioned.fill(
                 child: Image.asset(
-                  'assets/img/listBG.png', // Path รูปพื้นหลัง
+                  'assets/img/$posePicture', // Path รูปพื้นหลังจาก Firestore
                   fit: BoxFit.cover,
                 ),
               ),
@@ -61,27 +62,37 @@ class PoseDetailPage extends StatelessWidget {
                         onPressed: () => Navigator.pop(context),
                       ),
                     ),
-                    // ชื่อและข้อมูลท่าโยคะ
+                    // ข้อมูลท่าโยคะ
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // ชื่อท่า
+                          // ชื่อท่า (ภาษาไทย)
                           Text(
-                            poseName.toUpperCase(),
+                            poseName,
                             style: const TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
+                          // ชื่อท่า (ภาษาอังกฤษ)
+                          Text(
+                            poseName.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w300,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           // ระยะเวลา
                           Row(
                             children: [
                               const Icon(Icons.timer,
-                                  color: Colors.greenAccent),
+                                  color: Colors.greenAccent, size: 20),
                               const SizedBox(width: 8),
                               Text(
                                 '$poseTime นาที',
@@ -124,7 +135,10 @@ class PoseDetailPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('ดูวิดีโอ'),
+                        child: const Text(
+                          'ดูวิดีโอ',
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),
