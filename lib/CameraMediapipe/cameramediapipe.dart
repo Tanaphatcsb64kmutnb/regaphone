@@ -1,5 +1,3 @@
-// // D:\regaphone - Copy (2)\Rega-Project\regaproject\lib\CameraMediapipe\cameramediapipe.dart
-
 // import 'dart:async';
 // import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
@@ -41,6 +39,11 @@
 //   Timer? countdownTimer;
 //   bool isResting = false;
 
+//   // เพิ่มตัวแปรสำหรับเก็บผล prediction
+//   String currentPredictedPose = "Waiting...";
+//   double poseConfidence = 0.0;
+//   bool isConnected = true; // สถานะการเชื่อมต่อกับ Flask server
+
 //   List<Map<String, dynamic>> yogaPoses = [];
 
 //   @override
@@ -50,6 +53,40 @@
 //       fetchYogaPoses();
 //     }
 //     _setupMethodChannel();
+//   }
+
+//   void _setupMethodChannel() {
+//     platform.setMethodCallHandler((call) async {
+//       switch (call.method) {
+//         case 'videoCompleted':
+//           if (mounted) {
+//             setState(() {
+//               isResting = false;
+//               currentPoseIndex++;
+//             });
+//             Future.delayed(const Duration(milliseconds: 100), () {
+//               if (mounted) {
+//                 startPose();
+//               }
+//             });
+//           }
+//           break;
+//         case 'onPosePredicted':
+//           final Map<String, dynamic> prediction =
+//               Map<String, dynamic>.from(call.arguments);
+//           setState(() {
+//             currentPredictedPose = prediction['pose'] as String;
+//             poseConfidence = prediction['confidence'] as double;
+//             isConnected = true;
+//           });
+//           break;
+//         case 'onPredictionError':
+//           setState(() {
+//             isConnected = false;
+//           });
+//           break;
+//       }
+//     });
 //   }
 
 //   Future<void> fetchYogaPoses() async {
@@ -77,28 +114,8 @@
 //         }
 //       });
 //     } catch (e) {
-//       print("Error fetching yoga poses: $e");
+//       debugPrint("Error fetching yoga poses: $e");
 //     }
-//   }
-
-//   void _setupMethodChannel() {
-//     platform.setMethodCallHandler((call) async {
-//       if (call.method == "videoCompleted") {
-//         if (mounted) {
-//           setState(() {
-//             isResting = false;
-//             currentPoseIndex++;
-//           });
-//           Future.delayed(const Duration(milliseconds: 100), () {
-//             if (mounted) {
-//               startPose();
-//             }
-//           });
-//         }
-//         return null;
-//       }
-//       return null;
-//     });
 //   }
 
 //   void startPose() {
@@ -153,7 +170,7 @@
 //     try {
 //       await platform.invokeMethod('playRestVideo');
 //     } catch (e) {
-//       print("Failed to play rest video: $e");
+//       debugPrint("Failed to play rest video: $e");
 //       if (mounted) {
 //         setState(() {
 //           isResting = false;
@@ -183,14 +200,12 @@
 //       if (progress >= 0.7) {
 //         return Colors.green;
 //       } else if (progress >= 0.3) {
-//         // Interpolate between green and yellow
 //         return Color.lerp(
 //           Colors.yellow,
 //           Colors.green,
 //           (progress - 0.3) / 0.4,
 //         )!;
 //       } else {
-//         // Interpolate between red and yellow
 //         return Color.lerp(
 //           Colors.red,
 //           Colors.yellow,
@@ -202,6 +217,7 @@
 //     return Scaffold(
 //       body: Stack(
 //         children: [
+//           // Camera View
 //           SizedBox(
 //             width: double.infinity,
 //             height: double.infinity,
@@ -211,6 +227,8 @@
 //               creationParamsCodec: const StandardMessageCodec(),
 //             ),
 //           ),
+
+//           // Progress Bar
 //           if (widget.programId != null && yogaPoses.isNotEmpty)
 //             Positioned(
 //               top: 30,
@@ -247,6 +265,50 @@
 //                 ),
 //               ),
 //             ),
+
+//           // Pose Prediction Display
+//           Positioned(
+//             top: 80,
+//             left: 20,
+//             right: 20,
+//             child: Container(
+//               padding: const EdgeInsets.all(12),
+//               decoration: BoxDecoration(
+//                 color: Colors.black.withOpacity(0.7),
+//                 borderRadius: BorderRadius.circular(12),
+//               ),
+//               child: Column(
+//                 children: [
+//                   Text(
+//                     'Detected Pose: $currentPredictedPose',
+//                     style: const TextStyle(
+//                       color: Colors.white,
+//                       fontSize: 18,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Text(
+//                     'Confidence: ${(poseConfidence * 100).toStringAsFixed(1)}%',
+//                     style: TextStyle(
+//                       color: Colors.white.withOpacity(0.9),
+//                       fontSize: 16,
+//                     ),
+//                   ),
+//                   if (!isConnected)
+//                     const Text(
+//                       'Connection Error',
+//                       style: TextStyle(
+//                         color: Colors.red,
+//                         fontSize: 14,
+//                       ),
+//                     ),
+//                 ],
+//               ),
+//             ),
+//           ),
+
+//           // Current Pose Display
 //           if (widget.programId != null && yogaPoses.isNotEmpty)
 //             Positioned(
 //               bottom: 60,
@@ -270,13 +332,26 @@
 //                           ),
 //                         )
 //                       : currentPose != null
-//                           ? Text(
-//                               currentPose['name'],
-//                               style: const TextStyle(
-//                                 color: Colors.white,
-//                                 fontSize: 24,
-//                                 fontWeight: FontWeight.bold,
-//                               ),
+//                           ? Column(
+//                               mainAxisSize: MainAxisSize.min,
+//                               children: [
+//                                 Text(
+//                                   currentPose['name'],
+//                                   style: const TextStyle(
+//                                     color: Colors.white,
+//                                     fontSize: 24,
+//                                     fontWeight: FontWeight.bold,
+//                                   ),
+//                                 ),
+//                                 if (currentPredictedPose == currentPose['name'])
+//                                   const Text(
+//                                     'Correct Pose! 👍',
+//                                     style: TextStyle(
+//                                       color: Colors.green,
+//                                       fontSize: 18,
+//                                     ),
+//                                   )
+//                               ],
 //                             )
 //                           : const Text(
 //                               "Completed!",
@@ -295,10 +370,13 @@
 //   }
 // }
 
+// cameramediapipe.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'pose_result.dart';
 
 class CameraMediapipeApp extends StatelessWidget {
   final String? programId;
@@ -336,54 +414,32 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
   Timer? countdownTimer;
   bool isResting = false;
 
-  // เพิ่มตัวแปรสำหรับเก็บผล prediction
   String currentPredictedPose = "Waiting...";
   double poseConfidence = 0.0;
-  bool isConnected = true; // สถานะการเชื่อมต่อกับ Flask server
+  bool isConnected = true;
+
+  String? currentUser;
+  Map<String, double> poseScores = {};
+  double? lastPredictionScore;
+  String? programHistoryId;
 
   List<Map<String, dynamic>> yogaPoses = [];
 
   @override
   void initState() {
     super.initState();
+    _initializeUser();
     if (widget.programId != null) {
       fetchYogaPoses();
     }
     _setupMethodChannel();
   }
 
-  void _setupMethodChannel() {
-    platform.setMethodCallHandler((call) async {
-      switch (call.method) {
-        case 'videoCompleted':
-          if (mounted) {
-            setState(() {
-              isResting = false;
-              currentPoseIndex++;
-            });
-            Future.delayed(const Duration(milliseconds: 100), () {
-              if (mounted) {
-                startPose();
-              }
-            });
-          }
-          break;
-        case 'onPosePredicted':
-          final Map<String, dynamic> prediction =
-              Map<String, dynamic>.from(call.arguments);
-          setState(() {
-            currentPredictedPose = prediction['pose'] as String;
-            poseConfidence = prediction['confidence'] as double;
-            isConnected = true;
-          });
-          break;
-        case 'onPredictionError':
-          setState(() {
-            isConnected = false;
-          });
-          break;
-      }
-    });
+  Future<void> _initializeUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      currentUser = user.uid;
+    }
   }
 
   Future<void> fetchYogaPoses() async {
@@ -412,6 +468,144 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
       });
     } catch (e) {
       debugPrint("Error fetching yoga poses: $e");
+    }
+  }
+
+  void _setupMethodChannel() {
+    platform.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'videoCompleted':
+          if (mounted) {
+            if (currentPoseIndex < yogaPoses.length) {
+              await savePoseScore();
+            }
+
+            setState(() {
+              isResting = false;
+              currentPoseIndex++;
+            });
+
+            if (currentPoseIndex >= yogaPoses.length) {
+              await saveProgramHistory();
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PoseResultPage(
+                      programId: widget.programId!,
+                      programHistoryId: programHistoryId!,
+                    ),
+                  ),
+                );
+              }
+            } else {
+              Future.delayed(const Duration(milliseconds: 100), () {
+                if (mounted) {
+                  startPose();
+                }
+              });
+            }
+          }
+          break;
+
+        case 'onPosePredicted':
+          final Map<String, dynamic> prediction =
+              Map<String, dynamic>.from(call.arguments);
+          setState(() {
+            currentPredictedPose = prediction['pose'] as String;
+            lastPredictionScore = prediction['confidence'] as double;
+            poseConfidence = lastPredictionScore!;
+            isConnected = true;
+          });
+          break;
+
+        case 'onPredictionError':
+          setState(() {
+            isConnected = false;
+          });
+          break;
+      }
+    });
+  }
+
+  Future<void> savePoseScore() async {
+    if (currentPoseIndex >= yogaPoses.length || lastPredictionScore == null)
+      return;
+
+    final currentPose = yogaPoses[currentPoseIndex];
+    final score = lastPredictionScore! * 100;
+    final now = DateTime.now();
+
+    try {
+      // Save to YogaPose History
+      final docRef =
+          await FirebaseFirestore.instance.collection('YogaPose History').add({
+        'Pose_id':
+            FirebaseFirestore.instance.doc('Yoga Pose/${currentPose['id']}'),
+        'Pose_score': score,
+        'Performance': _getPerformanceLevel(score),
+        'Date': now,
+        'Time': now,
+        'User': FirebaseFirestore.instance.doc('Users/$currentUser'),
+        'Program':
+            FirebaseFirestore.instance.doc('Yoga Program/${widget.programId}'),
+        // Add history_id later after saving program history
+        'history_id': '' // Temporary value
+      });
+
+      poseScores[currentPose['id']] = score;
+    } catch (e) {
+      debugPrint("Error saving pose score: $e");
+    }
+  }
+
+  String _getPerformanceLevel(double score) {
+    if (score >= 75) return 'สุดยอดมาก';
+    if (score >= 50) return 'ดี';
+    if (score >= 25) return 'ปานกลาง';
+    return 'พอใช้';
+  }
+
+  Future<void> saveProgramHistory() async {
+    if (poseScores.isEmpty) return;
+
+    try {
+      double totalScore = 0;
+      poseScores.forEach((_, score) => totalScore += score);
+      final averageScore = totalScore / poseScores.length;
+
+      // Save to YogaProgram History
+      final docRef = await FirebaseFirestore.instance
+          .collection('YogaProgram History')
+          .add({
+        'Ovr_score': averageScore,
+        'User': FirebaseFirestore.instance.doc('Users/$currentUser'),
+        'Program_id':
+            FirebaseFirestore.instance.doc('Yoga Program/${widget.programId}'),
+        'Date': DateTime.now(),
+        'Time': DateTime.now(),
+      });
+
+      programHistoryId = docRef.id;
+
+      // Update all YogaPose History entries with the history_id
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('YogaPose History')
+          .where('Program',
+              isEqualTo: FirebaseFirestore.instance
+                  .doc('Yoga Program/${widget.programId}'))
+          .where('User',
+              isEqualTo: FirebaseFirestore.instance.doc('Users/$currentUser'))
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        await FirebaseFirestore.instance
+            .collection('YogaPose History')
+            .doc(doc.id)
+            .update({'history_id': docRef.id});
+      }
+    } catch (e) {
+      debugPrint("Error saving program history: $e");
     }
   }
 
@@ -489,32 +683,11 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
         ? yogaPoses[currentPoseIndex]
         : null;
 
-    // Calculate progress percentage
     double progressPercentage = remainingTime / totalTime;
-
-    // Calculate color based on remaining time
-    Color getProgressColor(double progress) {
-      if (progress >= 0.7) {
-        return Colors.green;
-      } else if (progress >= 0.3) {
-        return Color.lerp(
-          Colors.yellow,
-          Colors.green,
-          (progress - 0.3) / 0.4,
-        )!;
-      } else {
-        return Color.lerp(
-          Colors.red,
-          Colors.yellow,
-          progress / 0.3,
-        )!;
-      }
-    }
 
     return Scaffold(
       body: Stack(
         children: [
-          // Camera View
           SizedBox(
             width: double.infinity,
             height: double.infinity,
@@ -524,8 +697,6 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
               creationParamsCodec: const StandardMessageCodec(),
             ),
           ),
-
-          // Progress Bar
           if (widget.programId != null && yogaPoses.isNotEmpty)
             Positioned(
               top: 30,
@@ -544,7 +715,7 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
                       width: (MediaQuery.of(context).size.width - 40) *
                           progressPercentage,
                       decoration: BoxDecoration(
-                        color: getProgressColor(progressPercentage),
+                        color: _getProgressColor(progressPercentage),
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
@@ -562,8 +733,6 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
                 ),
               ),
             ),
-
-          // Pose Prediction Display
           Positioned(
             top: 80,
             left: 20,
@@ -604,8 +773,6 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
               ),
             ),
           ),
-
-          // Current Pose Display
           if (widget.programId != null && yogaPoses.isNotEmpty)
             Positioned(
               bottom: 60,
@@ -664,5 +831,22 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
         ],
       ),
     );
+  }
+
+  Color _getProgressColor(double progress) {
+    if (progress >= 0.7) return Colors.green;
+    if (progress >= 0.3) {
+      return Color.lerp(
+        Colors.yellow,
+        Colors.green,
+        (progress - 0.3) / 0.4,
+      )!;
+    } else {
+      return Color.lerp(
+        Colors.red,
+        Colors.yellow,
+        progress / 0.3,
+      )!;
+    }
   }
 }
