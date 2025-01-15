@@ -422,6 +422,8 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
   Map<String, double> poseScores = {};
   double? lastPredictionScore;
   String? programHistoryId;
+  Map<String, List<double>> posePredictions =
+      {}; // เพิ่มตัวแปรเก็บค่า predictions
 
   List<Map<String, dynamic>> yogaPoses = [];
 
@@ -476,6 +478,7 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
       switch (call.method) {
         case 'videoCompleted':
           if (mounted) {
+            // Save the last pose score before moving to next pose
             if (currentPoseIndex < yogaPoses.length) {
               await savePoseScore();
             }
@@ -486,7 +489,9 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
             });
 
             if (currentPoseIndex >= yogaPoses.length) {
+              // Program completed, save program history
               await saveProgramHistory();
+              // Navigate to results page
               if (mounted) {
                 Navigator.pushReplacement(
                   context,
@@ -516,6 +521,17 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
             lastPredictionScore = prediction['confidence'] as double;
             poseConfidence = lastPredictionScore!;
             isConnected = true;
+
+            // เก็บค่า prediction ระหว่างเล่น
+            if (currentPoseIndex < yogaPoses.length) {
+              final currentPoseId = yogaPoses[currentPoseIndex]['id'];
+              if (!posePredictions.containsKey(currentPoseId)) {
+                posePredictions[currentPoseId] = [];
+              }
+              posePredictions[currentPoseId]!.add(lastPredictionScore! * 100);
+              debugPrint(
+                  'Added prediction for pose $currentPoseId: ${lastPredictionScore! * 100}');
+            }
           });
           break;
 
@@ -529,34 +545,47 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
   }
 
   Future<void> savePoseScore() async {
-    if (currentPoseIndex >= yogaPoses.length || lastPredictionScore == null)
-      return;
+    if (currentPoseIndex >= yogaPoses.length) return;
 
     final currentPose = yogaPoses[currentPoseIndex];
-    final score = lastPredictionScore! * 100;
-    final now = DateTime.now();
+    final poseId = currentPose['id'];
+
+    // คำนวณค่าเฉลี่ยของ predictions ทั้งหมด
+    final predictions = posePredictions[poseId] ?? [];
+    if (predictions.isEmpty) {
+      debugPrint('No predictions found for pose $poseId');
+      return;
+    }
+
+    final avgScore = predictions.reduce((a, b) => a + b) / predictions.length;
+    debugPrint(
+        'Average score for pose $poseId: $avgScore (from ${predictions.length} predictions)');
 
     try {
-      // Save to YogaPose History
+      // บันทึกค่าเฉลี่ยลง Firebase
       final docRef =
           await FirebaseFirestore.instance.collection('YogaPose History').add({
-        'Pose_id':
-            FirebaseFirestore.instance.doc('Yoga Pose/${currentPose['id']}'),
-        'Pose_score': score,
-        'Performance': _getPerformanceLevel(score),
-        'Date': now,
-        'Time': now,
+        'Pose_id': FirebaseFirestore.instance.doc('Yoga Pose/$poseId'),
+        'Pose_score': avgScore,
+        'Performance': _getPerformanceLevel(avgScore),
+        'Date': DateTime.now(),
+        'Time': DateTime.now(),
         'User': FirebaseFirestore.instance.doc('Users/$currentUser'),
         'Program':
             FirebaseFirestore.instance.doc('Yoga Program/${widget.programId}'),
-        // Add history_id later after saving program history
-        'history_id': '' // Temporary value
+        'history_id': '', // จะอัพเดทภายหลัง
+        'prediction_count': predictions.length, // เพิ่มจำนวนครั้งที่ predict
+        'predictions': predictions, // เก็บค่าทั้งหมดไว้ด้วย
       });
 
-      poseScores[currentPose['id']] = score;
+      // Store score for final summary
+      poseScores[poseId] = avgScore;
     } catch (e) {
       debugPrint("Error saving pose score: $e");
     }
+
+    // ล้างค่า predictions สำหรับท่าต่อไป
+    posePredictions.remove(poseId);
   }
 
   String _getPerformanceLevel(double score) {
