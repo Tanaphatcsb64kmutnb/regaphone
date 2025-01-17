@@ -22,7 +22,7 @@ class PoseResultPage extends StatelessWidget {
       backgroundColor: Colors.black,
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('YogaProgram History') // ชื่อ collection ที่ถูกต้อง
+            .collection('YogaProgramHistory') // ชื่อ collection ที่ถูกต้อง
             .doc(programHistoryId)
             .snapshots(),
         builder: (context, programSnapshot) {
@@ -44,7 +44,7 @@ class PoseResultPage extends StatelessWidget {
 
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
-                .collection('YogaPose History') // ชื่อ collection ที่ถูกต้อง
+                .collection('YogaPoseHistory') // ชื่อ collection ที่ถูกต้อง
                 .where('history_id', isEqualTo: programHistoryId)
                 .snapshots(),
             builder: (context, poseSnapshot) {

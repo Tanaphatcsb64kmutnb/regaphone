@@ -59,7 +59,7 @@ class PoseLandmarkerHelper(
     private fun setupPoseLandmarker() {
         try {
             val baseOptionBuilder = BaseOptions.builder()
-                .setDelegate(Delegate.GPU)
+                .setDelegate(Delegate.CPU)
                 .setModelAssetPath("pose_landmarker_lite.task")
 
             val optionsBuilder = PoseLandmarker.PoseLandmarkerOptions.builder()

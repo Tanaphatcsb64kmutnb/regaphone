@@ -8,8 +8,6 @@ import '../history/HistoryPage.dart';
 import '../Favorite/FavoritePage.dart';
 import '../Notification/NotificationsPage.dart';
 
-
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -214,10 +212,13 @@ class _HomePageState extends State<HomePage> {
           'รายการโปรด',
           'assets/img/yoga2.png',
           onTap: () {
-            // Navigate to favorites page
+            final currentUser = FirebaseAuth.instance.currentUser;
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const FavoritePage()),
+              MaterialPageRoute(
+                builder: (context) =>
+                    FavoritePage(userId: currentUser?.uid ?? ''),
+              ),
             );
           },
         ),
@@ -346,13 +347,19 @@ class _HomePageState extends State<HomePage> {
             _buildDrawerItem(Icons.home, 'หน้าหลัก', () {
               Navigator.pop(context);
             }),
+            // 2. ในส่วน _buildDrawerItem
             _buildDrawerItem(Icons.favorite, 'รายการโปรด', () {
+              final currentUser = FirebaseAuth.instance.currentUser;
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const FavoritePage()),
+                MaterialPageRoute(
+                  builder: (context) =>
+                      FavoritePage(userId: currentUser?.uid ?? ''),
+                ),
               );
             }),
+
             _buildDrawerItem(Icons.history, 'ประวัติ', () {
               Navigator.pop(context);
               Navigator.push(
