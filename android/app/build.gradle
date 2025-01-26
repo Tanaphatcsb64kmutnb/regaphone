@@ -293,6 +293,7 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'org.json:json:20210307'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
 }
 
 // ตัวนี้เรียกไฟล์ download_tasks.gradle มาประมวลผล (ถ้ามี)

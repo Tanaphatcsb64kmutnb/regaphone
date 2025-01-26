@@ -147,17 +147,30 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../CameraMediapipe/pose_result.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-class HistoryPage extends StatelessWidget {
+class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
 
   @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  final User? user = FirebaseAuth.instance.currentUser;
+
+  @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    print('Current user ID: ${currentUser?.uid}'); // Debug log
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Please log in to view history',
+              style: TextStyle(color: Colors.white)),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Stack(
@@ -187,7 +200,7 @@ class HistoryPage extends StatelessWidget {
             ),
           ),
 
-          // Main Content
+          // Content
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,16 +210,14 @@ class HistoryPage extends StatelessWidget {
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child:
-                            const Icon(Icons.arrow_back, color: Colors.white),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
                       ),
-                      const SizedBox(width: 16),
                       const Text(
                         'ประวัติการเล่นโยคะของคุณ',
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 24,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -220,84 +231,61 @@ class HistoryPage extends StatelessWidget {
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('YogaProgramHistory')
-                        .where('User', isEqualTo: '/Users/${currentUser?.uid}')
-                        .orderBy('Time')
-                        .snapshots()
-                      ..listen((snapshot) {
-                        print('Query path: YogaProgramHistory');
-                        print('User path: /Users/${currentUser?.uid}');
-                        print(
-                            'Received snapshot with ${snapshot.docs.length} documents');
-                        for (var doc in snapshot.docs) {
-                          print('Document data: ${doc.data()}');
-                        }
-                      }),
+                        .where('User',
+                            isEqualTo: FirebaseFirestore.instance
+                                .doc('Users/${user?.uid}'))
+                        .orderBy('Date', descending: true)
+                        .snapshots(),
                     builder: (context, snapshot) {
-                      // แสดง error ถ้ามี
                       if (snapshot.hasError) {
-                        print('Error in StreamBuilder: ${snapshot.error}');
                         return Center(
-                          child: Text(
-                            'เกิดข้อผิดพลาด: ${snapshot.error}',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 16),
-                            textAlign: TextAlign.center,
-                          ),
+                          child: Text('Error: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.white)),
                         );
                       }
 
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                          ),
+                          child: CircularProgressIndicator(),
                         );
                       }
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return const Center(
                           child: Text(
-                            'ยังไม่มีประวัติการเล่น',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                            'ยังไม่มีประวัติการเล่นโยคะ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                            ),
                           ),
                         );
                       }
 
-                      // เรียงข้อมูลใหม่เพื่อให้แสดงล่าสุดก่อน
-                      final docs = snapshot.data!.docs.toList()
-                        ..sort((a, b) => (b.get('Time') as Timestamp)
-                            .compareTo(a.get('Time') as Timestamp));
-
                       return ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: docs.length,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: snapshot.data!.docs.length,
                         itemBuilder: (context, index) {
-                          final doc = docs[index];
+                          final doc = snapshot.data!.docs[index];
                           final data = doc.data() as Map<String, dynamic>;
-
-                          // Debug logs
-                          print('Processing document: ${doc.id}');
-                          print('Document data: $data');
-
-                          final timestamp = data['Time'] as Timestamp;
-                          final date = timestamp.toDate();
-                          final programId =
+                          final score = data['Ovr_score'] as double? ?? 0.0;
+                          final date = (data['Date'] as Timestamp).toDate();
+                          final programRef =
                               data['Program_id'] as DocumentReference;
-                          final score = (data['Ovr_score'] as num?) ?? 0;
 
                           return FutureBuilder<DocumentSnapshot>(
-                            future: programId.get(),
+                            future: programRef.get(),
                             builder: (context, programSnapshot) {
                               if (!programSnapshot.hasData) {
-                                return const SizedBox.shrink();
+                                return const SizedBox();
                               }
 
                               final programData = programSnapshot.data!.data()
-                                  as Map<String, dynamic>;
+                                  as Map<String, dynamic>?;
                               final programName =
-                                  programData['Name'] ?? 'Unknown Program';
+                                  programData?['Name'] ?? 'Unknown Program';
                               final programImage =
-                                  programData['Picture'] ?? 'listBG.png';
+                                  programData?['Picture'] ?? 'listBG.png';
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
@@ -307,7 +295,7 @@ class HistoryPage extends StatelessWidget {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => PoseResultPage(
-                                          programId: programId.id,
+                                          programId: programRef.id,
                                           programHistoryId: doc.id,
                                         ),
                                       ),
@@ -318,10 +306,6 @@ class HistoryPage extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       color: Colors.black.withOpacity(0.4),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Colors.white.withOpacity(0.1),
-                                        width: 1,
-                                      ),
                                     ),
                                     child: Row(
                                       children: [
@@ -334,19 +318,6 @@ class HistoryPage extends StatelessWidget {
                                             width: 80,
                                             height: 80,
                                             fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                              return Container(
-                                                width: 80,
-                                                height: 80,
-                                                color: Colors.grey
-                                                    .withOpacity(0.3),
-                                                child: const Icon(
-                                                  Icons.image_not_supported,
-                                                  color: Colors.white54,
-                                                ),
-                                              );
-                                            },
                                           ),
                                         ),
                                         const SizedBox(width: 16),
@@ -367,14 +338,15 @@ class HistoryPage extends StatelessWidget {
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                'คะแนน: ${score.round()}%',
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.white70,
+                                                'คะแนน: ${score.toStringAsFixed(1)}%',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: _getScoreColor(score),
+                                                  fontWeight: FontWeight.w500,
                                                 ),
                                               ),
                                               Text(
-                                                'เล่นเมื่อ: ${DateFormat('dd/MM/yyyy HH:mm').format(date)} น.',
+                                                'เล่นเมื่อ: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}',
                                                 style: const TextStyle(
                                                   fontSize: 14,
                                                   color: Colors.white70,
@@ -408,5 +380,12 @@ class HistoryPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _getScoreColor(double score) {
+    if (score >= 75) return Colors.green;
+    if (score >= 50) return Colors.yellow;
+    if (score >= 25) return Colors.orange;
+    return Colors.red;
   }
 }

@@ -676,25 +676,41 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
   }
 
   Future<void> savePoseScore() async {
-    if (currentPoseIndex >= yogaPoses.length || programHistoryId == null)
+    if (currentPoseIndex >= yogaPoses.length || programHistoryId == null) {
+      debugPrint('Cannot save pose score: Invalid index or missing history ID');
       return;
+    }
 
     final currentPose = yogaPoses[currentPoseIndex];
     final poseId = currentPose['id'];
 
+    // รอให้มีการเก็บข้อมูลอย่างน้อย 3 วินาที
+    await Future.delayed(const Duration(seconds: 3));
+
     // คำนวณค่าเฉลี่ยของ predictions ทั้งหมด
     final predictions = posePredictions[poseId] ?? [];
     if (predictions.isEmpty) {
-      debugPrint('No predictions found for pose $poseId');
-      return;
+      debugPrint('No predictions found for pose $poseId - Retrying...');
+      // รอเพิ่มอีก 2 วินาทีแล้วลองอีกครั้ง
+      await Future.delayed(const Duration(seconds: 2));
+      if (posePredictions[poseId]?.isEmpty ?? true) {
+        debugPrint(
+            'Still no predictions after retry - Recording default score');
+        predictions.add(0.0); // บันทึกคะแนน 0 ถ้าไม่มีข้อมูล
+      }
     }
 
-    final avgScore = predictions.reduce((a, b) => a + b) / predictions.length;
+    final avgScore = predictions.isNotEmpty
+        ? predictions.reduce((a, b) => a + b) / predictions.length
+        : 0.0;
+
     debugPrint(
         'Average score for pose $poseId: $avgScore (from ${predictions.length} predictions)');
 
     try {
-      // บันทึกค่าเฉลี่ยลง Firebase
+      // เพิ่ม CompleterFuture เพื่อติดตามการบันทึก
+      final completer = Completer<void>();
+
       await FirebaseFirestore.instance.collection('YogaPoseHistory').add({
         'Pose_id': FirebaseFirestore.instance.doc('Yoga Pose/$poseId'),
         'Pose_score': avgScore,
@@ -707,15 +723,22 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
         'history_id': programHistoryId,
         'prediction_count': predictions.length,
         'predictions': predictions,
+      }).then((_) {
+        poseScores[poseId] = avgScore;
+        completer.complete();
+      }).catchError((error) {
+        debugPrint("Error saving pose score: $error");
+        completer.completeError(error);
       });
 
-      // Store score for final summary
-      poseScores[poseId] = avgScore;
+      // รอให้การบันทึกเสร็จสมบูรณ์
+      await completer.future;
     } catch (e) {
-      debugPrint("Error saving pose score: $e");
+      debugPrint("Critical error saving pose score: $e");
+      // อาจเพิ่มการแจ้งเตือนผู้ใช้ที่นี่
     }
 
-    // ล้างค่า predictions สำหรับท่าต่อไป
+    // ล้างค่า predictions สำหรับท่าต่อไปหลังจากบันทึกเสร็จแล้ว
     posePredictions.remove(poseId);
   }
 

@@ -132,7 +132,7 @@ class PoseLandmarkerHelper(
         val requestBody = RequestBody.create(mediaType, json.toString())
 
         val request = Request.Builder()
-            .url("http://192.168.1.38:5000/predict")  
+            .url("http://192.168.8.184:5000/predict")  
             .post(requestBody)
             .build()
 
