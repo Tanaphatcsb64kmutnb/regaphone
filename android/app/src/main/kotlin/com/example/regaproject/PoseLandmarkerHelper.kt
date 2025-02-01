@@ -59,7 +59,7 @@ class PoseLandmarkerHelper(
     private fun setupPoseLandmarker() {
         try {
             val baseOptionBuilder = BaseOptions.builder()
-                .setDelegate(Delegate.CPU)
+                .setDelegate(Delegate.GPU)
                 .setModelAssetPath("pose_landmarker_lite.task")
 
             val optionsBuilder = PoseLandmarker.PoseLandmarkerOptions.builder()
@@ -132,7 +132,7 @@ class PoseLandmarkerHelper(
         val requestBody = RequestBody.create(mediaType, json.toString())
 
         val request = Request.Builder()
-            .url("http://192.168.8.184:5000/predict")  
+            .url("http://192.168.188.17:5000/predict")  
             .post(requestBody)
             .build()
 

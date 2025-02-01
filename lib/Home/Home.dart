@@ -7,6 +7,7 @@ import '../yogaprogrampose/YogaListPage.dart';
 import '../history/HistoryPage.dart';
 import '../Favorite/FavoritePage.dart';
 import '../Notification/NotificationsPage.dart';
+import './notification_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,11 +18,45 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String username = 'User';
+  // เพิ่มในคลาส _HomePageState
+  late Stream<QuerySnapshot> _notificationsStream;
+  bool _isFirstNotification = true;
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
+    _initializeNotifications();
+  }
+
+  void _initializeNotifications() {
+    // สร้าง stream สำหรับติดตามการแจ้งเตือนใหม่
+    _notificationsStream = FirebaseFirestore.instance
+        .collection('notifications')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+
+    // ติดตามการแจ้งเตือนใหม่
+    _notificationsStream.listen((snapshot) {
+      if (snapshot.docs.isNotEmpty && _isFirstNotification) {
+        final latestNotification = snapshot.docs.first;
+        final data = latestNotification.data() as Map<String, dynamic>;
+
+        // เช็คว่าเป็นการแจ้งเตือนที่ยังไม่ได้อ่าน
+        if (data['status'] == 'unread' || data['isRead'] == false) {
+          _showNotificationDialog(latestNotification);
+          _isFirstNotification = false;
+        }
+      }
+    });
+  }
+
+  void _showNotificationDialog(QueryDocumentSnapshot notification) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => NotificationDialog(notification: notification),
+    );
   }
 
   void _fetchUserData() async {
@@ -100,9 +135,50 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.notifications, color: Colors.white),
-          onPressed: () => _openNotifications(context),
+        leading: StreamBuilder<QuerySnapshot>(
+          stream: _notificationsStream,
+          builder: (context, snapshot) {
+            int unreadCount = 0;
+            if (snapshot.hasData) {
+              unreadCount = snapshot.data!.docs
+                  .where((doc) =>
+                      doc['status'] == 'unread' || doc['isRead'] == false)
+                  .length;
+            }
+
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications, color: Colors.white),
+                  onPressed: () => _openNotifications(context),
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 14,
+                        minHeight: 14,
+                      ),
+                      child: Text(
+                        unreadCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
         title: const Text(
           'REGA',

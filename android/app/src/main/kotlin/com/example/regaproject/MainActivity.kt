@@ -1,3 +1,4 @@
+//MainActivity.kt
 package com.example.regaproject
 
 import android.content.Intent

@@ -92,7 +92,7 @@ class LiveCameraPlatformView(
         cameraProvider.unbindAll()
 
         val preview = Preview.Builder()
-            .setTargetResolution(Size(240, 180))//480*360
+            .setTargetResolution(Size(360, 240))//480*360
             .build()
             .also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
