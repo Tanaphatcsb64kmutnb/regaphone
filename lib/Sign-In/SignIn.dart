@@ -225,9 +225,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:regaproject/Home/Home.dart';
 import '../Sign-Up/SignUp.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import '../Home/notification_dialog.dart'; // หรือที่อยู่ที่ถูกต้องของ NotificationDialog
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+  final Map<String, dynamic>? pendingNotification; // เพิ่มพารามิเตอร์นี้
+
+  const SignInPage({
+    super.key,
+    this.pendingNotification,
+  });
 
   @override
   _SignInPageState createState() => _SignInPageState();
@@ -258,6 +265,9 @@ class _SignInPageState extends State<SignInPage> {
           email: email,
           password: _passwordController.text.trim(),
         );
+
+        // บันทึก FCM Token หลัง login สำเร็จ
+        await _saveFCMToken(userCredential.user!.uid);
 
         if (mounted) {
           // Show success popup and navigate to HomePage
@@ -333,6 +343,22 @@ class _SignInPageState extends State<SignInPage> {
     );
   }
 
+  Future<void> _saveFCMToken(String userId) async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'fcmToken': fcmToken,
+        'tokenUpdatedAt': FieldValue.serverTimestamp()
+      });
+
+      print('FCM Token saved successfully');
+    } catch (e) {
+      print('Error saving FCM token: $e');
+    }
+  }
+
+  // แก้ไขฟังก์ชัน _showLoginSuccessPopup
   void _showLoginSuccessPopup(BuildContext context) {
     showDialog(
       context: context,
@@ -343,11 +369,25 @@ class _SignInPageState extends State<SignInPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Close the dialog
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-              );
+              Navigator.of(context).pop(); // ปิด dialog
+
+              if (widget.pendingNotification != null) {
+                // ถ้ามีการแจ้งเตือนที่รอ
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => NotificationDialog(
+                      notificationData: widget.pendingNotification!,
+                    ),
+                  ),
+                );
+              } else {
+                // ถ้าไม่มีการแจ้งเตือน
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => const HomePage(),
+                  ),
+                );
+              }
             },
             child: const Text('OK'),
           ),

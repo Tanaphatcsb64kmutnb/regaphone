@@ -8,6 +8,12 @@ import '../history/HistoryPage.dart';
 import '../Favorite/FavoritePage.dart';
 import '../Notification/NotificationsPage.dart';
 import './notification_dialog.dart';
+import '../services/notification_service.dart';
+import '../services/in_app_message_dialog.dart';
+import 'package:flutter/services.dart'; // สำหรับ MethodChannel
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:convert'; // สำหรับ jsonEncode, jsonDecode
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,44 +24,172 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String username = 'User';
-  // เพิ่มในคลาส _HomePageState
-  late Stream<QuerySnapshot> _notificationsStream;
+  // เป็น
+  late Stream<RemoteMessage> _notificationsStream;
   bool _isFirstNotification = true;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+// เพิ่มฟังก์ชันใหม่สำหรับจัดการการแจ้งเตือนตามสถานะ login
+  Future<void> _subscribeToNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _firebaseMessaging.subscribeToTopic('user_${user.uid}');
+      await _firebaseMessaging.subscribeToTopic('general_notifications');
+
+      await _firebaseMessaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
+  }
+
+  Future<void> _unsubscribeFromNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _firebaseMessaging.unsubscribeFromTopic('user_${user.uid}');
+      await _firebaseMessaging.unsubscribeFromTopic('general_notifications');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+
     _fetchUserData();
-    _initializeNotifications();
+    // _setupNotifications(); // เพิ่มบรรทัดนี้
+    initializeNotifications(); // เพิ่มบรรทัดนี้
+    _initializeFirebaseMessaging();
+    _checkAuthAndInitialize();
   }
 
-  void _initializeNotifications() {
-    // สร้าง stream สำหรับติดตามการแจ้งเตือนใหม่
-    _notificationsStream = FirebaseFirestore.instance
-        .collection('notifications')
-        .orderBy('createdAt', descending: true)
-        .snapshots();
-
-    // ติดตามการแจ้งเตือนใหม่
-    _notificationsStream.listen((snapshot) {
-      if (snapshot.docs.isNotEmpty && _isFirstNotification) {
-        final latestNotification = snapshot.docs.first;
-        final data = latestNotification.data() as Map<String, dynamic>;
-
-        // เช็คว่าเป็นการแจ้งเตือนที่ยังไม่ได้อ่าน
-        if (data['status'] == 'unread' || data['isRead'] == false) {
-          _showNotificationDialog(latestNotification);
-          _isFirstNotification = false;
+  void _checkAuthAndInitialize() {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+      if (user != null) {
+        // เมื่อ Login สำเร็จ
+        initializeNotifications();
+        _initializeFirebaseMessaging();
+        await _subscribeToNotifications();
+      } else {
+        // เมื่อ Logout หรือยังไม่ได้ login
+        await _unsubscribeFromNotifications();
+        if (mounted) {
+          setState(() {
+            _notificationsStream = Stream.empty(); // ล้าง stream การแจ้งเตือน
+          });
         }
       }
     });
   }
 
-  void _showNotificationDialog(QueryDocumentSnapshot notification) {
+  // ใน _HomePageState class เพิ่มฟังก์ชัน
+  void _saveNotificationToFirestore(RemoteMessage message) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance.collection('notifications').add({
+      'userId': user.uid,
+      'title': message.notification?.title,
+      'body': message.notification?.body,
+      'timestamp': FieldValue.serverTimestamp(),
+      'imageUrl': message.data['imageUrl'],
+      'additionalData': message.data,
+      'isRead': false,
+    });
+  }
+
+// แก้ไขใน _initializeFirebaseMessaging()
+  void _initializeFirebaseMessaging() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _notificationsStream = FirebaseMessaging.onMessage;
+
+      _notificationsStream.listen((RemoteMessage message) {
+        if (mounted && message.notification != null) {
+          _saveNotificationToFirestore(message); // เพิ่มบรรทัดนี้
+
+          showDialog(
+            context: context,
+            builder: (context) => NotificationDialog(
+              notificationData: {
+                'title': message.notification?.title,
+                'body': message.notification?.body,
+                'timestamp': DateTime.now().millisecondsSinceEpoch,
+                ...message.data
+              },
+            ),
+          );
+        }
+      });
+    }
+  }
+
+  void initializeNotifications() {
+    const platform = MethodChannel('com.example.regaproject/notification');
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'notificationClicked') {
+        final data = Map<String, dynamic>.from(call.arguments);
+        final user = FirebaseAuth.instance.currentUser;
+
+        if (mounted) {
+          if (user != null) {
+            // กรณี login แล้ว
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NotificationDialog(
+                  notificationData: data,
+                ),
+              ),
+            );
+          } else {
+            // กรณียังไม่ได้ login
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SignInPage(
+                  pendingNotification: data,
+                ),
+              ),
+            );
+          }
+        }
+      }
+    });
+  }
+
+  // 1. ฟังก์ชันเก็บข้อมูลแจ้งเตือน
+  Future<void> _saveNotificationData(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('pending_notification', jsonEncode(data));
+  }
+
+// 2. ฟังก์ชันแสดงการแจ้งเตือนที่บันทึกไว้
+  Future<void> _showSavedNotification() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedNotification = prefs.getString('pending_notification');
+
+    if (savedNotification != null) {
+      final data = jsonDecode(savedNotification) as Map<String, dynamic>;
+      await prefs.remove('pending_notification'); // ลบข้อมูลที่บันทึกไว้
+
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => NotificationDialog(
+              notificationData: data,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showInAppMessage(RemoteMessage message) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => NotificationDialog(notification: notification),
+      builder: (context) => InAppMessageDialog(message: message),
     );
   }
 
@@ -135,15 +269,14 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: StreamBuilder<QuerySnapshot>(
+        leading: StreamBuilder<RemoteMessage>(
+          // เปลี่ยนจาก QuerySnapshot เป็น RemoteMessage
           stream: _notificationsStream,
           builder: (context, snapshot) {
-            int unreadCount = 0;
-            if (snapshot.hasData) {
-              unreadCount = snapshot.data!.docs
-                  .where((doc) =>
-                      doc['status'] == 'unread' || doc['isRead'] == false)
-                  .length;
+            // ปรับการตรวจสอบข้อมูล
+            bool hasUnreadMessage = false;
+            if (snapshot.hasData && snapshot.data != null) {
+              hasUnreadMessage = true; // หรือตามลอจิกที่ต้องการ
             }
 
             return Stack(
@@ -152,7 +285,7 @@ class _HomePageState extends State<HomePage> {
                   icon: const Icon(Icons.notifications, color: Colors.white),
                   onPressed: () => _openNotifications(context),
                 ),
-                if (unreadCount > 0)
+                if (hasUnreadMessage)
                   Positioned(
                     right: 0,
                     top: 0,
@@ -166,9 +299,9 @@ class _HomePageState extends State<HomePage> {
                         minWidth: 14,
                         minHeight: 14,
                       ),
-                      child: Text(
-                        unreadCount.toString(),
-                        style: const TextStyle(
+                      child: const Text(
+                        "1",
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 8,
                         ),
@@ -479,5 +612,11 @@ class _HomePageState extends State<HomePage> {
       ),
       onTap: onTap,
     );
+  }
+
+  @override
+  void dispose() {
+    _unsubscribeFromNotifications();
+    super.dispose();
   }
 }
