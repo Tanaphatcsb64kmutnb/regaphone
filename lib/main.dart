@@ -142,165 +142,35 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'firebase_options.dart';
-import 'package:regaproject/Home/Home.dart';
 import 'Sign-In/SignIn.dart';
-import 'services/notification_service.dart';
 import 'services/in_app_message_dialog.dart';
 
-// Global navigator key
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-class NotificationHandler {
-  static const platform = MethodChannel('com.example.regaproject/notification');
-
-  static void initialize() {
-    platform.setMethodCallHandler((call) async {
-      switch (call.method) {
-        case 'notificationClicked':
-          print('Notification clicked with data: ${call.arguments}');
-          // แปลง Bundle string เป็น Map
-          final Map<String, dynamic> notificationData =
-              _parseNotificationData(call.arguments);
-          handleNotificationClick(notificationData);
-          break;
-      }
-    });
-  }
-
-  static Map<String, dynamic> _parseNotificationData(String bundleStr) {
-    try {
-      // แยกข้อมูลจาก Bundle string
-      String dataStr = bundleStr.replaceAll('Bundle[', '').replaceAll(']', '');
-      Map<String, dynamic> data = {};
-
-      // แยก payload
-      if (dataStr.contains('payload=')) {
-        final payloadStart = dataStr.indexOf('payload=') + 8;
-        final payloadStr = dataStr.substring(payloadStart);
-
-        // ถ้า payload เป็น Map
-        if (payloadStr.startsWith('{') && payloadStr.endsWith('}')) {
-          // แปลง String เป็น Map
-          final payloadMap = Map<String, dynamic>.from(Uri.splitQueryString(
-              payloadStr.substring(1, payloadStr.length - 1)));
-          data.addAll(payloadMap);
-        } else {
-          data['message'] = payloadStr;
-        }
-      }
-
-      return data;
-    } catch (e) {
-      print('Error parsing notification data: $e');
-      return {'message': bundleStr};
-    }
-  }
-
-  static void handleNotificationClick(Map<String, dynamic> data) {
-    if (navigatorKey.currentContext != null) {
-      try {
-        final RemoteMessage message = RemoteMessage(
-          data: data,
-          notification: RemoteNotification(
-              title: data['title'] ?? 'การแจ้งเตือน',
-              body: data['body'] ?? data['message'] ?? 'คุณมีการแจ้งเตือนใหม่'),
-          messageId: DateTime.now().millisecondsSinceEpoch.toString(),
-        );
-
-        // แสดงการแจ้งเตือนในแอป
-        showDialog(
-          context: navigatorKey.currentContext!,
-          builder: (context) => InAppMessageDialog(
-            message: message,
-            isFullScreen: true,
-          ),
-        );
-      } catch (e) {
-        print('Error showing notification dialog: $e');
-        // แสดง dialog แบบพื้นฐานถ้าเกิดข้อผิดพลาด
-        showDialog(
-          context: navigatorKey.currentContext!,
-          builder: (context) => AlertDialog(
-            title: const Text('การแจ้งเตือน'),
-            content: Text(data['message'] ?? 'คุณมีการแจ้งเตือนใหม่'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('ปิด'),
-              ),
-            ],
-          ),
-        );
-      }
-    }
-  }
-}
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   print('Handling a background message: ${message.messageId}');
-  if (message.notification != null) {
-    await NotificationService.showNotification(
-      title: message.notification?.title ?? '',
-      body: message.notification?.body ?? '',
-    );
-  }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize notification handler
-  NotificationHandler.initialize();
-
-  // Check internet connection
-  var connectivityResult = await Connectivity().checkConnectivity();
-  if (connectivityResult == ConnectivityResult.none) {
-    print('No internet connection');
-    return;
-  }
-
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize notification service
-  await NotificationService.initialize();
-
-  // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Create notification channel
-  await NotificationService.createNotificationChannel();
-
-  // Set up foreground message handling
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     print('Got a message in foreground!');
     print('Message data: ${message.data}');
-
-    if (message.notification != null) {
-      print('Message notification:');
-      print('Title: ${message.notification?.title}');
-      print('Body: ${message.notification?.body}');
-
-      await NotificationService.showNotification(
-        title: message.notification?.title ?? '',
-        body: message.notification?.body ?? '',
-        payload: message.data.toString(),
-      );
-    }
   });
 
-  // Handle notification click when app is in background
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('Message clicked when app in background! ${message.data}');
     if (navigatorKey.currentContext != null) {
       Navigator.push(
         navigatorKey.currentContext!,
@@ -314,29 +184,7 @@ void main() async {
     }
   });
 
-  // Handle notification click when app is terminated
-  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-    if (message != null) {
-      print(
-          'App opened from terminated state by notification! ${message.data}');
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        if (navigatorKey.currentContext != null) {
-          Navigator.push(
-            navigatorKey.currentContext!,
-            MaterialPageRoute(
-              builder: (context) => InAppMessageDialog(
-                message: message,
-                isFullScreen: true,
-              ),
-            ),
-          );
-        }
-      });
-    }
-  });
-
-  // Get FCM token
-  String? token = await NotificationService.getFCMToken();
+  String? token = await FirebaseMessaging.instance.getToken();
   print('FCM Token: $token');
 
   runApp(const MyApp());
@@ -354,8 +202,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-
 
 
 

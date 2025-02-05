@@ -25,11 +25,19 @@ class MainActivity : FlutterActivity() {
     private lateinit var notificationMethodChannel: MethodChannel
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    super.onCreate(savedInstanceState)
+    
+    if (intent?.getBooleanExtra("show_notification_details", false) == true) {
+        val notificationTitle = intent.getStringExtra("notification_title") ?: ""
+        val notificationBody = intent.getStringExtra("notification_body") ?: ""
         
-        // ตรวจสอบข้อมูลการแจ้งเตือนเมื่อเปิดแอป
-        handleNotificationIntent(intent)
+        notificationMethodChannel.invokeMethod("showNotificationDetails", mapOf(
+            "title" to notificationTitle,
+            "body" to notificationBody,
+            "timestamp" to System.currentTimeMillis()
+        ))
     }
+}
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -95,108 +103,82 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleNotificationIntent(intent)
-    }
+    super.onNewIntent(intent)
+    handleIntent(intent)
+}
 
-   private fun handleNotificationIntent(intent: Intent) {
-    intent.extras?.let { bundle ->
-        try {
-            // สร้าง Map เพื่อเก็บข้อมูลที่จะส่งไป Flutter
-            val notificationData = HashMap<String, Any>()
-            
-            // เพิ่มข้อมูลจาก bundle
-            bundle.keySet()?.forEach { key ->
-                bundle.get(key)?.let { value ->
-                    notificationData[key] = value
-                }
-            }
-
-            // ดึงข้อมูล title และ body จาก bundle
-            val title = bundle.getString("gcm.notification.title") ?: ""
-            val body = bundle.getString("gcm.notification.body") ?: ""
-            
-            // เพิ่มข้อมูลเพิ่มเติม
-            notificationData["title"] = title
-            notificationData["body"] = body
-            notificationData["timestamp"] = System.currentTimeMillis()
-            notificationData["requiresAuth"] = true  // เพิ่ม flag นี้
-
-            // ส่งข้อมูลไปยัง Flutter โดยไม่ต้องเช็ค login
+private fun handleIntent(intent: Intent) {
+    if (intent.getBooleanExtra("show_notification", false)) {
+        val notificationData = intent.getBundleExtra("notification_data")
+        if (notificationData != null) {
             notificationMethodChannel.invokeMethod(
-                "notificationClicked",
-                notificationData
+                "showNotificationDetails",
+                mapOf(
+                    "title" to notificationData.getString("title"),
+                    "body" to notificationData.getString("body"),
+                    "timestamp" to notificationData.getLong("timestamp")
+                )
             )
-        } catch (e: Exception) {
-            println("Error sending notification data to Flutter: ${e.message}")
         }
     }
 }
 
-    private fun showNotificationWithImage(title: String, body: String, imageUrl: String?, payload: String?) {
-        Thread {
-            try {
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                var bitmap: Bitmap? = null
 
-                // Download image if URL is provided
-                if (!imageUrl.isNullOrEmpty()) {
-                    try {
-                        val connection = URL(imageUrl).openConnection() as HttpURLConnection
-                        connection.doInput = true
-                        connection.connect()
-                        bitmap = BitmapFactory.decodeStream(connection.inputStream)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+private fun showNotificationWithImage(title: String, body: String, imageUrl: String?, payload: String?) {
+    Thread {
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            var bitmap: Bitmap? = null
+
+            // Download image if URL is provided
+            if (!imageUrl.isNullOrEmpty()) {
+                try {
+                    val connection = URL(imageUrl).openConnection() as HttpURLConnection
+                    connection.doInput = true
+                    connection.connect()
+                    bitmap = BitmapFactory.decodeStream(connection.inputStream)
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-
-                // Create notification intent
-                val intent = Intent(this, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    if (payload != null) {
-                        putExtra("payload", payload)
-                    }
-                }
-
-                val pendingIntent = PendingIntent.getActivity(
-                    this, 
-                    0, 
-                    intent,
-                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-                )
-
-                // Build notification
-                val channelId = "high_importance_channel"
-                val builder = NotificationCompat.Builder(this, channelId)
-                    .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setContentTitle(title)
-                    .setContentText(body)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .setAutoCancel(true)
-                    .setContentIntent(pendingIntent)
-
-                // Add image if downloaded successfully
-                if (bitmap != null) {
-                    val bigPictureStyle = NotificationCompat.BigPictureStyle()
-                        .bigPicture(bitmap)
-                        .setBigContentTitle(title)
-                        .setSummaryText(body)
-                    
-                    builder.setStyle(bigPictureStyle)
-                        .setLargeIcon(bitmap)
-                } else {
-                    builder.setStyle(NotificationCompat.BigTextStyle()
-                        .bigText(body))
-                }
-
-                // Show notification
-                notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
-
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
-        }.start()
-    }
+
+            val intent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("show_notification_details", true)
+                putExtra("notification_title", title)
+                putExtra("notification_body", body)
+                if (payload != null) {
+                    putExtra("payload", payload)
+                }
+            }
+
+            val pendingIntent = PendingIntent.getActivity(
+                this, 
+                System.currentTimeMillis().toInt(), 
+                intent,
+                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val channelId = "high_importance_channel"
+            val builder = NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+
+            if (bitmap != null) {
+                builder.setStyle(NotificationCompat.BigPictureStyle()
+                    .bigPicture(bitmap))
+            }
+
+            notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }.start()
+}
+
 }
