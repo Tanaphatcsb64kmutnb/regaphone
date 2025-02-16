@@ -1,141 +1,66 @@
 // import 'package:flutter/material.dart';
-// import 'package:firebase_core/firebase_core.dart'; // Import Firebase core
-// import 'firebase_options.dart'; // Import generated firebase_options.dart
-// import 'package:regaproject/Home/Home.dart';
-// import 'Sign-In/SignIn.dart';
-// import 'Sign-Up/SignUp.dart';
-
-// void main() async {
-//   WidgetsFlutterBinding
-//       .ensureInitialized(); // Ensure widgets binding is initialized
-//   await Firebase.initializeApp(
-//     // Initialize Firebase
-//     options: DefaultFirebaseOptions.currentPlatform,
-//   );
-//   runApp(
-//     const MaterialApp(
-//       home: SignInPage(),
-//       debugShowCheckedModeBanner: false, // ปิด Debug Banner
-//     ),
-//   );
-// }
-
-// import 'package:flutter/material.dart';
 // import 'package:firebase_core/firebase_core.dart';
 // import 'package:firebase_messaging/firebase_messaging.dart';
 // import 'package:connectivity_plus/connectivity_plus.dart';
 // import 'firebase_options.dart';
-// import 'package:regaproject/Home/Home.dart';
 // import 'Sign-In/SignIn.dart';
-// import 'Sign-Up/SignUp.dart';
-// import 'services/notification_service.dart';
-// import 'package:regaproject/services/in_app_message_dialog.dart';
+// import 'services/in_app_message_dialog.dart';
+
+// final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 // @pragma('vm:entry-point')
 // Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 //   await Firebase.initializeApp(
 //     options: DefaultFirebaseOptions.currentPlatform,
 //   );
-
 //   print('Handling a background message: ${message.messageId}');
-
-//   if (message.notification != null) {
-//     await NotificationService.showNotification(
-//       title: message.notification?.title ?? '',
-//       body: message.notification?.body ?? '',
-//     );
-//   }
 // }
 
 // void main() async {
 //   WidgetsFlutterBinding.ensureInitialized();
 
-//   // ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต
-//   var connectivityResult = await Connectivity().checkConnectivity();
-//   if (connectivityResult == ConnectivityResult.none) {
-//     print('No internet connection');
-//     return;
-//   }
-
-//   // Initialize Firebase
 //   await Firebase.initializeApp(
 //     options: DefaultFirebaseOptions.currentPlatform,
 //   );
 
-//   // Initialize NotificationService
-//   await NotificationService.initialize();
-
-//   // ตั้งค่า background message handler
 //   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-//   // ขอสิทธิ์การแจ้งเตือน
-//   NotificationSettings settings =
-//       await FirebaseMessaging.instance.requestPermission(
-//     alert: true,
-//     badge: true,
-//     sound: true,
-//     provisional: false,
-//     announcement: true,
-//     carPlay: true,
-//     criticalAlert: true,
-//   );
-
-//   print('User granted permission: ${settings.authorizationStatus}');
-
-//   // ตั้งค่าการแสดงการแจ้งเตือนเมื่อแอพทำงานอยู่
-//   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-//     alert: true,
-//     badge: true,
-//     sound: true,
-//   );
-
-//   // สร้าง notification channel
-//   await NotificationService.createNotificationChannel();
-
-//   // แก้ไขส่วนการรับฟังเมื่อคลิกที่การแจ้งเตือนขณะแอพอยู่ในพื้นหลัง
-//   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-//     print('Message clicked! ${message.data}');
-
-//     // แสดง dialog เมื่อกดที่การแจ้งเตือน
-//     Navigator.of(GlobalKey<NavigatorState>().currentContext!).push(
-//       MaterialPageRoute(
-//         builder: (context) => InAppMessageDialog(message: message),
-//       ),
-//     );
+//   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+//     print('Got a message in foreground!');
+//     print('Message data: ${message.data}');
 //   });
 
-//   // รับฟังเมื่อคลิกที่การแจ้งเตือนขณะแอพอยู่ในพื้นหลัง
 //   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-//     print('Message clicked! ${message.data}');
-//   });
-
-//   // แก้ไขส่วนตรวจสอบการคลิกการแจ้งเตือนที่เปิดแอพ
-//   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-//     if (message != null) {
-//       print(
-//           'App opened from terminated state by notification! ${message.data}');
-
-//       // แสดง dialog เมื่อเปิดแอพจากการแจ้งเตือน
-//       Future.delayed(const Duration(milliseconds: 1000), () {
-//         Navigator.of(GlobalKey<NavigatorState>().currentContext!).push(
-//           MaterialPageRoute(
-//             builder: (context) => InAppMessageDialog(message: message),
+//     if (navigatorKey.currentContext != null) {
+//       Navigator.push(
+//         navigatorKey.currentContext!,
+//         MaterialPageRoute(
+//           builder: (context) => InAppMessageDialog(
+//             message: message,
+//             isFullScreen: true,
 //           ),
-//         );
-//       });
+//         ),
+//       );
 //     }
 //   });
 
-//   // ดึง FCM token
-//   String? token = await NotificationService.getFCMToken();
+//   String? token = await FirebaseMessaging.instance.getToken();
 //   print('FCM Token: $token');
 
-//   runApp(
-//     const MaterialApp(
-//       home: SignInPage(),
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({Key? key}) : super(key: key);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       navigatorKey: navigatorKey,
+//       home: const SignInPage(),
 //       debugShowCheckedModeBanner: false,
-//     ),
-//   );
+//     );
+//   }
 // }
 
 import 'package:flutter/material.dart';
@@ -144,7 +69,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'firebase_options.dart';
 import 'Sign-In/SignIn.dart';
+import 'Home/Home.dart';
 import 'services/in_app_message_dialog.dart';
+import 'services/session_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -197,159 +124,36 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
-      home: const SignInPage(),
+      home: const AuthenticationWrapper(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
+class AuthenticationWrapper extends StatelessWidget {
+  const AuthenticationWrapper({Key? key}) : super(key: key);
 
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: SessionService.isSessionValid(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
 
+        // ถ้ามี session ที่ยังใช้งานได้ ไปที่ HomePage
+        if (snapshot.hasData && snapshot.data == true) {
+          return const HomePage();
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import 'package:flutter/material.dart';
-// import 'package:firebase_core/firebase_core.dart';
-// import 'package:firebase_messaging/firebase_messaging.dart';
-// import 'package:connectivity_plus/connectivity_plus.dart';
-// import 'firebase_options.dart';
-// import 'Sign-In/SignIn.dart';
-// import 'services/notification_service.dart';
-// import 'services/in_app_message_dialog.dart';
-
-// // Global navigator key
-// final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-// // ตัวแปรเพื่อเก็บ messageId ของการแจ้งเตือนที่จัดการไปแล้ว
-// String? lastHandledMessageId;
-
-// void handleNotificationClick(RemoteMessage message) {
-//   // ตรวจสอบว่าข้อความนี้ได้ถูกจัดการไปแล้วหรือไม่
-//   if (message.messageId != null && message.messageId == lastHandledMessageId) {
-//     print('ตรวจจับการแจ้งเตือนซ้ำแล้ว ไม่ดำเนินการต่อ');
-//     return;
-//   }
-//   lastHandledMessageId = message.messageId;
-
-//   if (navigatorKey.currentContext != null) {
-//     Navigator.push(
-//       navigatorKey.currentContext!,
-//       MaterialPageRoute(
-//         builder: (context) => InAppMessageDialog(
-//           message: message,
-//           isFullScreen: true,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// @pragma('vm:entry-point')
-// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-//   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-//   print('Handling a background message: ${message.messageId}');
-//   if (message.notification != null) {
-//     await NotificationService.showNotification(
-//       title: message.notification?.title ?? '',
-//       body: message.notification?.body ?? '',
-//     );
-//   }
-// }
-
-// void main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-
-//   // ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต
-//   var connectivityResult = await Connectivity().checkConnectivity();
-//   if (connectivityResult == ConnectivityResult.none) {
-//     print('ไม่มีการเชื่อมต่ออินเทอร์เน็ต');
-//     return;
-//   }
-
-//   await Firebase.initializeApp(
-//     options: DefaultFirebaseOptions.currentPlatform,
-//   );
-
-//   // เริ่มต้น NotificationService
-//   await NotificationService.initialize();
-
-//   // ตั้งค่า background message handler
-//   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-//   // สร้างช่องการแจ้งเตือน
-//   await NotificationService.createNotificationChannel();
-
-//   // จัดการข้อความแจ้งเตือนในขณะที่แอปอยู่ใน foreground
-//   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-//     print('ได้รับข้อความใน foreground!');
-//     print('ข้อมูลของข้อความ: ${message.data}');
-
-//     if (message.notification != null) {
-//       print('รายละเอียดแจ้งเตือน:');
-//       print('Title: ${message.notification?.title}');
-//       print('Body: ${message.notification?.body}');
-
-//       await NotificationService.showNotification(
-//         title: message.notification?.title ?? '',
-//         body: message.notification?.body ?? '',
-//         payload: message.data.toString(),
-//       );
-//     }
-//   });
-
-//   // จัดการการคลิกแจ้งเตือนเมื่อแอปอยู่ใน background
-//   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-//     print('คลิกแจ้งเตือนเมื่อแอปอยู่ใน background! ${message.data}');
-//     handleNotificationClick(message);
-//   });
-
-//   // จัดการการคลิกแจ้งเตือนเมื่อแอปถูกเปิดจาก terminated state
-//   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-//     if (message != null) {
-//       print('แอปถูกเปิดจากสถานะ terminated โดยแจ้งเตือน! ${message.data}');
-//       Future.delayed(const Duration(milliseconds: 1000), () {
-//         handleNotificationClick(message);
-//       });
-//     }
-//   });
-
-//   // รับ FCM Token
-//   String? token = await NotificationService.getFCMToken();
-//   print('FCM Token: $token');
-
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       navigatorKey: navigatorKey,
-//       home: const SignInPage(),
-//       debugShowCheckedModeBanner: false,
-//     );
-//   }
-// }
+        // ถ้าไม่มี session หรือ session หมดอายุ ไปที่ SignInPage
+        return const SignInPage();
+      },
+    );
+  }
+}

@@ -14,6 +14,8 @@ import 'package:flutter/services.dart'; // สำหรับ MethodChannel
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:convert'; // สำหรับ jsonEncode, jsonDecode
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/session_service.dart';
+import '../settings/setting.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -52,10 +54,24 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _checkSession() async {
+    final isValid = await SessionService.isSessionValid();
+    if (!isValid) {
+      await FirebaseAuth.instance.signOut();
+      await SessionService.clearSession();
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SignInPage()),
+        );
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-
+    _checkSession(); // เพิ่มบรรทัดนี้
     _fetchUserData();
     // _setupNotifications(); // เพิ่มบรรทัดนี้
     initializeNotifications(); // เพิ่มบรรทัดนี้
@@ -206,27 +222,60 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // void _showLogoutConfirmation(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Confirm Logout'),
+  //       content: const Text('Are you sure you want to logout?'),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //         TextButton(
+  //           onPressed: () async {
+  //             await SessionService.clearSession(); // เพิ่มบรรทัดนี้
+  //             await FirebaseAuth.instance.signOut().then((_) {
+  //               Navigator.pushReplacement(
+  //                 context,
+  //                 MaterialPageRoute(builder: (_) => const SignInPage()),
+  //               );
+  //             });
+  //           },
+  //           child: const Text('Logout'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirm Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: const Text('ยืนยันการออกจากระบบ'),
+        content: const Text('คุณต้องการออกจากระบบใช่หรือไม่?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('ยกเลิก'),
           ),
           TextButton(
-            onPressed: () {
-              FirebaseAuth.instance.signOut().then((_) {
-                Navigator.pushReplacement(
+            onPressed: () async {
+              // ล้าง session ก่อนออกจากระบบ
+              await SessionService.clearSession();
+              // ออกจากระบบ Firebase
+              await FirebaseAuth.instance.signOut();
+              if (mounted) {
+                Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (_) => const SignInPage()),
+                  MaterialPageRoute(builder: (context) => const SignInPage()),
+                  (route) => false, // ล้าง stack ทั้งหมด
                 );
-              });
+              }
             },
-            child: const Text('Logout'),
+            child: const Text('ออกจากระบบ'),
           ),
         ],
       ),
@@ -261,6 +310,52 @@ class _HomePageState extends State<HomePage> {
       context,
       MaterialPageRoute(builder: (context) => const NotificationsPage()),
     );
+  }
+
+  // เพิ่มต่อจากฟังก์ชันอื่นๆ ก่อน build
+  void _checkCurrentSession() async {
+    final session = await SessionService.getSession();
+    if (session != null) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('ข้อมูล Session ปัจจุบัน'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Username: ${session['username']}'),
+                Text('Email: ${session['email']}'),
+                Text('Login ล่าสุด: ${session['lastLogin']}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('ปิด'),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('ไม่พบ Session'),
+            content: const Text('ไม่พบข้อมูล session ที่ใช้งานอยู่'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('ปิด'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -556,6 +651,29 @@ class _HomePageState extends State<HomePage> {
             _buildDrawerItem(Icons.home, 'หน้าหลัก', () {
               Navigator.pop(context);
             }),
+
+            // // เพิ่มส่วนนี้ก่อน _buildDrawerItem สุดท้าย
+            // const Divider(color: Colors.white24), // เพิ่มเส้นคั่น
+            // _buildDrawerItem(Icons.bug_report, 'ทดสอบ Session', () {
+            //   Navigator.pop(context);
+            //   _checkCurrentSession();
+            // }),
+            // _buildDrawerItem(Icons.delete_outline, 'ล้าง Session', () async {
+            //   // ล้าง session
+            //   await SessionService.clearSession();
+            //   // ออกจากระบบ Firebase
+            //   await FirebaseAuth.instance.signOut();
+            //   Navigator.pop(context); // ปิด drawer
+
+            //   // เด้งกลับไปหน้า login
+            //   if (mounted) {
+            //     Navigator.pushAndRemoveUntil(
+            //       context,
+            //       MaterialPageRoute(builder: (context) => const SignInPage()),
+            //       (route) => false, // ล้าง stack ทั้งหมด
+            //     );
+            //   }
+            // }),
             // 2. ในส่วน _buildDrawerItem
             _buildDrawerItem(Icons.favorite, 'รายการโปรด', () {
               final currentUser = FirebaseAuth.instance.currentUser;
@@ -591,7 +709,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const YogaListPage()),
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
               );
             }),
           ],

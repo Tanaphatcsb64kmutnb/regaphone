@@ -22,6 +22,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.create
 import okhttp3.Callback
 import okhttp3.Call
 import okhttp3.Response
@@ -108,47 +109,56 @@ class PoseLandmarkerHelper(
         }
     }
 
-    private fun sendLandmarksToFlask(landmarks: List<NormalizedLandmark>) {
-    // เพิ่ม log เพื่อตรวจสอบข้อมูล
-    Log.d("PoseLandmarker", "Sending landmarks: ${landmarks.size}")
+ // PoseLandmarkerHelper.kt
 
+private fun sendLandmarksToFlask(landmarks: List<NormalizedLandmark>) {
     if (isProcessingHttp.get()) return
     isProcessingHttp.set(true)
 
     try {
+        // แก้วิธีการสร้าง JSONArray
         val keypointsArray = JSONArray()
         landmarks.forEach { landmark ->
+            // แปลง float เป็น double ก่อนใส่ใน JSONArray
             keypointsArray.put(landmark.x().toDouble())
             keypointsArray.put(landmark.y().toDouble())
             keypointsArray.put(landmark.z().toDouble())
         }
 
-        // เพิ่ม log ตรวจสอบ JSON
         val json = JSONObject()
         json.put("keypoints", keypointsArray)
-        Log.d("PoseLandmarker", "Sending JSON: ${json}")
 
-        val mediaType = "application/json".toMediaType()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
         val requestBody = RequestBody.create(mediaType, json.toString())
 
         val request = Request.Builder()
-            .url("http://192.168.188.17:5000/predict")  
+            .url("http://192.168.8.104:5000/predict")  // ตรวจสอบ IP address ให้ถูกต้อง
             .post(requestBody)
+            .addHeader("Accept", "application/json; charset=utf-8")
+            .addHeader("Content-Type", "application/json; charset=utf-8")
+            .build()
+
+        val client = OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(5, TimeUnit.SECONDS)
             .build()
 
         client.newCall(request).enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 try {
-                    val responseData = JSONObject(response.body?.string() ?: "{}")
-                    Log.d("PoseLandmarker", "Response: ${responseData}")
-                    
-                    val prediction = mapOf(
-                        "pose" to responseData.getString("predicted_pose"),
-                        "confidence" to responseData.getDouble("confidence")
-                    )
+                    val responseData = response.body?.string()
+                    if (responseData != null) {
+                        val jsonResponse = JSONObject(responseData)
+                        Log.d("PoseLandmarker", "Response: $jsonResponse")
+                        
+                        val prediction = mapOf(
+                            "pose" to jsonResponse.getString("predicted_pose"),
+                            "confidence" to jsonResponse.getDouble("confidence")
+                        )
 
-                    mainThreadHandler.post {
-                        methodChannel.invokeMethod("onPosePredicted", prediction)
+                        mainThreadHandler.post {
+                            methodChannel.invokeMethod("onPosePredicted", prediction)
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e("PoseLandmarker", "Error parsing response: ${e.message}")
@@ -159,15 +169,20 @@ class PoseLandmarkerHelper(
 
             override fun onFailure(call: Call, e: IOException) {
                 Log.e("PoseLandmarker", "Request failed: ${e.message}")
+                mainThreadHandler.post {
+                    methodChannel.invokeMethod("onPredictionError", "การเชื่อมต่อล้มเหลว")
+                }
                 isProcessingHttp.set(false)
             }
         })
     } catch (e: Exception) {
         Log.e("PoseLandmarker", "Error sending landmarks: ${e.message}")
+        mainThreadHandler.post {
+            methodChannel.invokeMethod("onPredictionError", "เกิดข้อผิดพลาดในการส่งข้อมูล")
+        }
         isProcessingHttp.set(false)
     }
 }
-
     fun detectLiveStream(imageProxy: ImageProxy, isFrontCamera: Boolean) {
         // Quick exit conditions
         if (isProcessing.get() || poseLandmarker == null) {

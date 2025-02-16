@@ -92,14 +92,14 @@ class LiveCameraPlatformView(
         cameraProvider.unbindAll()
 
         val preview = Preview.Builder()
-            .setTargetResolution(Size(360, 240))//480*360
+            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
             .build()
             .also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
         val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetResolution(Size(640, 480))//640*480
+            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
             .also {

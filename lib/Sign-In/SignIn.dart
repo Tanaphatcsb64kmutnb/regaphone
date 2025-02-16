@@ -227,6 +227,7 @@ import 'package:regaproject/Home/Home.dart';
 import '../Sign-Up/SignUp.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../Home/notification_dialog.dart'; // หรือที่อยู่ที่ถูกต้องของ NotificationDialog
+import '../services/session_service.dart';
 
 class SignInPage extends StatefulWidget {
   final Map<String, dynamic>? pendingNotification; // เพิ่มพารามิเตอร์นี้
@@ -246,7 +247,79 @@ class _SignInPageState extends State<SignInPage> {
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   bool _isLoading = false;
+
+  // void _signIn() async {
+  //   if (_formKey.currentState!.validate()) {
+  //     setState(() {
+  //       _isLoading = true;
+  //     });
+
+  //     try {
+  //       // First, get the user's email from their username
+  //       final String email =
+  //           await _getUserEmailFromUsername(_usernameController.text.trim());
+
+  //       // Then sign in with the email and password
+  //       final UserCredential userCredential =
+  //           await _auth.signInWithEmailAndPassword(
+  //         email: email,
+  //         password: _passwordController.text.trim(),
+  //       );
+
+  //       // บันทึก FCM Token หลัง login สำเร็จ
+  //       await _saveFCMToken(userCredential.user!.uid);
+
+  //       // ดึงข้อมูลผู้ใช้จาก Firestore
+  //       final userDoc = await _firestore
+  //           .collection('users')
+  //           .doc(userCredential.user!.uid)
+  //           .get();
+  //       final userData = userDoc.data() as Map<String, dynamic>;
+
+  //       // บันทึก session
+  //       await SessionService.saveSession({
+  //         'uid': userCredential.user!.uid,
+  //         'email': email,
+  //         'username': userData['username'],
+  //         'lastLogin': DateTime.now().toIso8601String(),
+  //       });
+
+  //       if (mounted) {
+  //         // Show success popup and navigate to HomePage
+  //         _showLoginSuccessPopup(context);
+  //       }
+
+  //       print('User signed in successfully: ${userCredential.user?.email}');
+  //     } on FirebaseAuthException catch (e) {
+  //       String message;
+  //       if (e.code == 'user-not-found') {
+  //         message = 'No user found with this username.';
+  //       } else if (e.code == 'wrong-password') {
+  //         message = 'Incorrect password.';
+  //       } else {
+  //         message = 'Login failed: ${e.message}';
+  //       }
+
+  //       // Show error dialog
+  //       if (mounted) {
+  //         _showErrorDialog(message);
+  //       }
+  //     } catch (e) {
+  //       if (mounted) {
+  //         _showErrorDialog('An error occurred. Please try again.');
+  //       }
+  //       print('Error during sign in: $e');
+  //     } finally {
+  //       if (mounted) {
+  //         setState(() {
+  //           _isLoading = false;
+  //         });
+  //       }
+  //     }
+  //   }
+  // }
 
   void _signIn() async {
     if (_formKey.currentState!.validate()) {
@@ -255,22 +328,38 @@ class _SignInPageState extends State<SignInPage> {
       });
 
       try {
-        // First, get the user's email from their username
+        // ดึง email จาก username
         final String email =
             await _getUserEmailFromUsername(_usernameController.text.trim());
 
-        // Then sign in with the email and password
+        // เข้าสู่ระบบด้วย email และ password
         final UserCredential userCredential =
             await _auth.signInWithEmailAndPassword(
           email: email,
           password: _passwordController.text.trim(),
         );
 
-        // บันทึก FCM Token หลัง login สำเร็จ
+        // บันทึก FCM Token
         await _saveFCMToken(userCredential.user!.uid);
 
+        // ดึงข้อมูลผู้ใช้จาก Firestore
+        final userDoc = await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        // แปลงข้อมูลเป็น Map
+        final userData = userDoc.data() as Map<String, dynamic>;
+
+        // บันทึก session
+        await SessionService.saveSession({
+          'uid': userCredential.user!.uid,
+          'email': email,
+          'username': userData['username'],
+          'lastLogin': DateTime.now().toIso8601String(),
+        });
+
         if (mounted) {
-          // Show success popup and navigate to HomePage
           _showLoginSuccessPopup(context);
         }
 
