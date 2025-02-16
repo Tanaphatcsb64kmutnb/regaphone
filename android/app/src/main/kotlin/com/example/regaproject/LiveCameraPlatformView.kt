@@ -13,9 +13,7 @@ import io.flutter.plugin.platform.PlatformView
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import android.util.Size
 import android.view.ViewGroup
-import com.google.mediapipe.tasks.vision.core.RunningMode
 
 class LiveCameraPlatformView(
     private val context: Context,
@@ -51,7 +49,6 @@ class LiveCameraPlatformView(
         container.addView(previewView)
         container.addView(overlayView)
         overlayView.bringToFront()
-        container.invalidate()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -66,12 +63,12 @@ class LiveCameraPlatformView(
                 override fun onResults(resultBundle: PoseLandmarkerHelper.ResultBundle) {
                     val poseResult = resultBundle.results.firstOrNull() ?: return
                     container.post {
+                        // ใช้ขนาดของ previewView เพื่อให้ landmarks วาดทาบร่างกายจริง
                         overlayView.setResults(
                             poseResult,
-                            resultBundle.inputImageHeight,
-                            resultBundle.inputImageWidth
+                            previewView.height,
+                            previewView.width
                         )
-                        overlayView.bringToFront()
                     }
                 }
             }
@@ -92,14 +89,14 @@ class LiveCameraPlatformView(
         cameraProvider.unbindAll()
 
         val preview = Preview.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
             .build()
             .also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
         val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
             .also {
