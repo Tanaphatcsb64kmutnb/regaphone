@@ -1,5 +1,6 @@
 
 buildscript {
+    ext.kotlin_version = '1.9.22' 
     repositories {
         google()
         mavenCentral()
@@ -9,7 +10,9 @@ buildscript {
         classpath 'com.google.gms:google-services:4.3.15'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.1' // Or newer
         classpath "de.undercouch:gradle-download-task:4.1.2"  // เพิ่ม Plugin สำหรับดาวน์โหลด
+        
     }
+    apply plugin: 'com.google.gms.google-services'
 }
 
 allprojects {

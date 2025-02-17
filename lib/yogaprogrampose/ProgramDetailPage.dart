@@ -129,6 +129,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'YogaDetailPage.dart'; // สำหรับแสดงท่าที่อยู่ในโปรแกรมนั้น
+import 'package:firebase_auth/firebase_auth.dart'; // เพิ่ม import นี้
 
 class ProgramDetailPage extends StatelessWidget {
   final String programId;
@@ -138,6 +139,8 @@ class ProgramDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
@@ -230,7 +233,8 @@ class ProgramDetailPage extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => YogaDetailPage(
-                                  programId: programId, // ส่ง ID ของโปรแกรม
+                                  programId: programId,
+                                  userId: currentUser?.uid ?? '',
                                 ),
                               ),
                             );

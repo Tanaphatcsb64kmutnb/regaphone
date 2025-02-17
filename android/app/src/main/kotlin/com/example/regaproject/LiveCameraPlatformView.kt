@@ -1,4 +1,4 @@
-package com.example.regaproject 
+package com.example.regaproject
 
 import android.content.Context
 import android.util.Log
@@ -10,14 +10,14 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.flutter.plugin.platform.PlatformView
+import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import android.util.Size
 import android.view.ViewGroup
-import com.google.mediapipe.tasks.vision.core.RunningMode
 
 class LiveCameraPlatformView(
     private val context: Context,
+    private val methodChannel: MethodChannel,
     private var isFrontCamera: Boolean
 ) : PlatformView {
 
@@ -30,7 +30,6 @@ class LiveCameraPlatformView(
     init {
         container = FrameLayout(context)
 
-        // Create PreviewView with TextureView
         previewView = PreviewView(context).apply {
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE 
             layoutParams = FrameLayout.LayoutParams(
@@ -39,7 +38,6 @@ class LiveCameraPlatformView(
             )
         }
 
-        // Create OverlayView
         overlayView = OverlayView(context, null).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -48,18 +46,15 @@ class LiveCameraPlatformView(
             setBackgroundColor(android.graphics.Color.TRANSPARENT)
         }
 
-        // Add views to container
         container.addView(previewView)
         container.addView(overlayView)
-        
-        // Ensure overlay is on top
         overlayView.bringToFront()
-        container.invalidate()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         poseLandmarkerHelper = PoseLandmarkerHelper(
             context = context,
+            methodChannel = methodChannel,
             poseLandmarkerHelperListener = object : PoseLandmarkerHelper.LandmarkerListener {
                 override fun onError(error: String) {
                     Log.e("LiveCameraPlatformView", error)
@@ -68,12 +63,12 @@ class LiveCameraPlatformView(
                 override fun onResults(resultBundle: PoseLandmarkerHelper.ResultBundle) {
                     val poseResult = resultBundle.results.firstOrNull() ?: return
                     container.post {
+                        // ใช้ขนาดของ previewView เพื่อให้ landmarks วาดทาบร่างกายจริง
                         overlayView.setResults(
                             poseResult,
-                            resultBundle.inputImageHeight,
-                            resultBundle.inputImageWidth
+                            previewView.height,
+                            previewView.width
                         )
-                        overlayView.bringToFront()
                     }
                 }
             }
@@ -94,14 +89,14 @@ class LiveCameraPlatformView(
         cameraProvider.unbindAll()
 
         val preview = Preview.Builder()
-            .setTargetResolution(Size(640, 480))
+            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
             .build()
             .also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
         val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetResolution(Size(640, 480))
+            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
             .also {

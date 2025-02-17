@@ -1,115 +1,159 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // Import Firebase core
-import 'firebase_options.dart'; // Import generated firebase_options.dart
-import 'package:regaproject/Home/Home.dart';
-import 'Sign-In/SignIn.dart';
-import 'Sign-Up/SignUp.dart';
-
-void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Ensure widgets binding is initialized
-  await Firebase.initializeApp(
-    // Initialize Firebase
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(
-    const MaterialApp(
-      home: SignInPage(),
-      debugShowCheckedModeBanner: false, // ปิด Debug Banner
-    ),
-  );
-}
-
-
-// //main.dart
 // import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:connectivity_plus/connectivity_plus.dart';
+// import 'firebase_options.dart';
+// import 'Sign-In/SignIn.dart';
+// import 'services/in_app_message_dialog.dart';
 
-// void main() {
+// final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+//   print('Handling a background message: ${message.messageId}');
+// }
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+
+//   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+//   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+//     print('Got a message in foreground!');
+//     print('Message data: ${message.data}');
+//   });
+
+//   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+//     if (navigatorKey.currentContext != null) {
+//       Navigator.push(
+//         navigatorKey.currentContext!,
+//         MaterialPageRoute(
+//           builder: (context) => InAppMessageDialog(
+//             message: message,
+//             isFullScreen: true,
+//           ),
+//         ),
+//       );
+//     }
+//   });
+
+//   String? token = await FirebaseMessaging.instance.getToken();
+//   print('FCM Token: $token');
+
 //   runApp(const MyApp());
 // }
 
 // class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
+//   const MyApp({Key? key}) : super(key: key);
 
 //   @override
 //   Widget build(BuildContext context) {
 //     return MaterialApp(
-//       title: 'Realtime Pose Detection Demo',
-//       home: Scaffold(
-//         appBar: AppBar(title: const Text('Realtime Pose Detection')),
-//         body: const LiveCameraScreen(),
-//       ),
+//       navigatorKey: navigatorKey,
+//       home: const SignInPage(),
+//       debugShowCheckedModeBanner: false,
 //     );
 //   }
 // }
 
-// class LiveCameraScreen extends StatefulWidget {
-//   const LiveCameraScreen({super.key});
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'firebase_options.dart';
+import 'Sign-In/SignIn.dart';
+import 'Home/Home.dart';
+import 'services/in_app_message_dialog.dart';
+import 'services/session_service.dart';
 
-//   @override
-//   State<LiveCameraScreen> createState() => _LiveCameraScreenState();
-// }
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// class _LiveCameraScreenState extends State<LiveCameraScreen> {
-//   bool isFrontCamera = true;
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  print('Handling a background message: ${message.messageId}');
+}
 
-//   void toggleCamera() async {
-//     try {
-//       const platform = MethodChannel('live_camera_view');
-//       await platform.invokeMethod(
-//         'switchCamera',
-//         {'camera': isFrontCamera ? 'front' : 'rear'},
-//       );
-//       setState(() {
-//         isFrontCamera = !isFrontCamera;
-//       });
-//     } catch (e) {
-//       print('Failed to switch camera: $e');
-//     }
-//   }
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return LayoutBuilder(
-//       builder: (context, constraints) {
-//         return Stack(
-//           children: [
-//             Center(
-//               child: SizedBox(
-//                 width: constraints.maxWidth,
-//                 height: constraints.maxHeight,
-//                 child: AndroidView(
-//                   viewType: 'live_camera_view',
-//                   creationParams: {'camera': isFrontCamera ? 'front' : 'rear'},
-//                   creationParamsCodec: const StandardMessageCodec(),
-//                   onPlatformViewCreated: (int id) {
-//                     print('AndroidView created with id: $id');
-//                   },
-//                 ),
-//               ),
-//             ),
-//             Positioned(
-//               bottom: 20,
-//               left: 20,
-//               right: 20,
-//               child: Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-//                 children: [
-//                   FloatingActionButton(
-//                     onPressed: toggleCamera,
-//                     backgroundColor: Colors.blue,
-//                     child: Icon(
-//                       isFrontCamera ? Icons.camera_front : Icons.camera_rear,
-//                       size: 30,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-// }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    print('Got a message in foreground!');
+    print('Message data: ${message.data}');
+  });
+
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    if (navigatorKey.currentContext != null) {
+      Navigator.push(
+        navigatorKey.currentContext!,
+        MaterialPageRoute(
+          builder: (context) => InAppMessageDialog(
+            message: message,
+            isFullScreen: true,
+          ),
+        ),
+      );
+    }
+  });
+
+  String? token = await FirebaseMessaging.instance.getToken();
+  print('FCM Token: $token');
+
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      home: const AuthenticationWrapper(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class AuthenticationWrapper extends StatelessWidget {
+  const AuthenticationWrapper({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: SessionService.isSessionValid(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        // ถ้ามี session ที่ยังใช้งานได้ ไปที่ HomePage
+        if (snapshot.hasData && snapshot.data == true) {
+          return const HomePage();
+        }
+
+        // ถ้าไม่มี session หรือ session หมดอายุ ไปที่ SignInPage
+        return const SignInPage();
+      },
+    );
+  }
+}
