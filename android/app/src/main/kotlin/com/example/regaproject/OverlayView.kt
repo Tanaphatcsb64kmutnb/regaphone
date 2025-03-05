@@ -1,89 +1,157 @@
 package com.example.regaproject
 
-import android.content.Context 
-import android.graphics.Canvas 
-import android.graphics.Color 
-import android.graphics.Paint
-import android.util.AttributeSet 
-import android.view.View 
-import androidx.core.content.ContextCompat 
-import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker 
+import android.content.Context
+import android.graphics.*
+import android.util.AttributeSet
+import android.view.SurfaceView
+import android.view.SurfaceHolder
+import android.graphics.PorterDuff
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
-import kotlin.math.max
+import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 
-// ในไฟล์ OverlayView.kt
-class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
-    private var results: PoseLandmarkerResult? = null
-    private var imageWidth: Int = 1
-    private var imageHeight: Int = 1
+class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context, attrs), SurfaceHolder.Callback {
+
+    private var currentResult: PoseLandmarkerResult? = null
+    private var angleMap: Map<String, Double>? = null
+
+    // ขนาดต้นฉบับของภาพที่ MediaPipe วิเคราะห์
+    private var imageWidth = 1280
+    private var imageHeight = 720
 
     private val pointPaint = Paint().apply {
-        color = Color.GREEN // เปลี่ยนเป็นสีเขียวเหมือนในภาพตัวอย่าง
-        strokeWidth = LANDMARK_STROKE_WIDTH
+        color = Color.YELLOW
+        strokeWidth = 12f
         style = Paint.Style.FILL
+        isAntiAlias = true
     }
-    
+
     private val linePaint = Paint().apply {
-        color = Color.RED // เปลี่ยนเป็นสีแดงเหมือนในภาพตัวอย่าง
-        strokeWidth = LANDMARK_STROKE_WIDTH
+        color = Color.RED
+        strokeWidth = 8f
         style = Paint.Style.STROKE
+        isAntiAlias = true
+        strokeCap = Paint.Cap.ROUND
     }
 
-    fun setResults(poseLandmarkerResults: PoseLandmarkerResult, imageHeight: Int, imageWidth: Int) {
-        results = poseLandmarkerResults
-        this.imageHeight = imageHeight
-        this.imageWidth = imageWidth
-        invalidate()
+    init {
+        setZOrderOnTop(true)
+        holder.setFormat(PixelFormat.TRANSPARENT)
+        holder.addCallback(this)
+        setWillNotDraw(false)
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-        
-        results?.let { poseResult ->
-            poseResult.landmarks().firstOrNull()?.let { landmarks ->
-                // คำนวณสัดส่วนให้พอดีกับขนาดจริงของกล้อง
-                val viewAspectRatio = width.toFloat() / height
-                val imageAspectRatio = imageWidth.toFloat() / imageHeight
-                
-                var scaleFactor: Float
+    @Synchronized
+    fun setResults(
+        poseLandmarkerResults: PoseLandmarkerResult,
+        inputImageHeight: Int,
+        inputImageWidth: Int
+    ) {
+        if (!holder.surface.isValid) return
+
+        currentResult = poseLandmarkerResults
+        imageHeight = inputImageHeight
+        imageWidth = inputImageWidth
+
+        post { drawOverlay() }
+    }
+
+    // ฟังก์ชันรับค่ามุม (angles) ที่คำนวณได้จาก PoseLandmarkerHelper
+    fun setAngles(angles: Map<String, Double>) {
+        angleMap = angles
+        post { drawOverlay() }
+    }
+
+    private fun drawOverlay() {
+        if (!holder.surface.isValid || currentResult == null) return
+
+        val canvas = holder.lockCanvas()
+        try {
+            // เคลียร์ canvas
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+
+            currentResult?.landmarks()?.firstOrNull()?.let { landmarks ->
+                // คำนวณ scale และ offset สำหรับการวาดให้พอดีกับหน้าจอ
+                val overlayW = width.toFloat()
+                val overlayH = height.toFloat()
+                val cameraAspect = imageWidth.toFloat() / imageHeight.toFloat()
+                val overlayAspect = overlayW / overlayH
+                var scale = 1f
                 var offsetX = 0f
                 var offsetY = 0f
-                
-                if (viewAspectRatio > imageAspectRatio) {
-                    // View กว้างกว่า
-                    scaleFactor = height.toFloat() / imageHeight
-                    offsetX = (width - imageWidth * scaleFactor) / 2
+
+                if (overlayAspect > cameraAspect) {
+                    scale = overlayW / imageWidth
+                    val scaledH = imageHeight * scale
+                    offsetY = (overlayH - scaledH) / 2f
                 } else {
-                    // View สูงกว่า
-                    scaleFactor = width.toFloat() / imageWidth
-                    offsetY = (height - imageHeight * scaleFactor) / 2
+                    scale = overlayH / imageHeight
+                    val scaledW = imageWidth * scale
+                    offsetX = (overlayW - scaledW) / 2f
                 }
 
-                // วาดเส้นเชื่อม landmark
+                // วาดเส้นเชื่อมระหว่าง landmarks
                 PoseLandmarker.POSE_LANDMARKS.forEach { connection ->
-                    val start = landmarks[connection.start()]
-                    val end = landmarks[connection.end()]
-                    
-                    val startX = (start.x() * imageWidth * scaleFactor) + offsetX
-                    val startY = (start.y() * imageHeight * scaleFactor) + offsetY
-                    val endX = (end.x() * imageWidth * scaleFactor) + offsetX
-                    val endY = (end.y() * imageHeight * scaleFactor) + offsetY
-                    
-                    canvas.drawLine(startX, startY, endX, endY, linePaint)
+                    if (connection != null) {
+                        val start = landmarks[connection.start()]
+                        val end = landmarks[connection.end()]
+
+                        val startX = offsetX + (start.x() * imageWidth) * scale
+                        val startY = offsetY + (start.y() * imageHeight) * scale
+                        val endX = offsetX + (end.x() * imageWidth) * scale
+                        val endY = offsetY + (end.y() * imageHeight) * scale
+
+                        canvas.drawLine(startX, startY, endX, endY, linePaint)
+                    }
                 }
 
-                // วาดจุด landmark
-                landmarks.forEach { landmark ->
-                    val x = (landmark.x() * imageWidth * scaleFactor) + offsetX
-                    val y = (landmark.y() * imageHeight * scaleFactor) + offsetY
-                    canvas.drawCircle(x, y, LANDMARK_RADIUS, pointPaint)
+                // วาดจุด landmarks
+                landmarks.forEach { lm ->
+                    val cx = offsetX + (lm.x() * imageWidth) * scale
+                    val cy = offsetY + (lm.y() * imageHeight) * scale
+                    canvas.drawCircle(cx, cy, 10f, pointPaint)
+                }
+
+                // วาดตัวเลขแสดงค่ามุม (Angle) ที่คำนวณได้
+                val angleTextPaint = Paint().apply {
+                    color = Color.WHITE+
+                    textSize = 100f
+                    style = Paint.Style.FILL
+                    isAntiAlias = true
+                }
+
+                // mapping ชื่อมุมไปยัง index ของ landmark ที่ใช้แสดงค่า
+                // ตัวอย่าง: "left_elbow_angle" -> index 13, "right_elbow_angle" -> index 14 เป็นต้น
+                angleMap?.forEach { (angleName, angleValue) ->
+                    val midIndex = when(angleName) {
+                        "left_elbow_angle" -> 13
+                        "right_elbow_angle" -> 14
+                        "left_shoulder_angle" -> 11
+                        "right_shoulder_angle" -> 12
+                        "left_hip_angle" -> 23
+                        "right_hip_angle" -> 24
+                        "left_knee_angle" -> 25
+                        "right_knee_angle" -> 26
+                        else -> null
+                    }
+
+                    midIndex?.let { idx ->
+                        if (idx < landmarks.size) {
+                            val lm = landmarks[idx]
+                            val cx = offsetX + (lm.x() * imageWidth) * scale
+                            val cy = offsetY + (lm.y() * imageHeight) * scale
+                            canvas.drawText("${angleValue.toInt()}°", cx, cy - 10f, angleTextPaint)
+                        }
+                    }
                 }
             }
+        } finally {
+            holder.unlockCanvasAndPost(canvas)
         }
     }
 
-    companion object {
-        private const val LANDMARK_STROKE_WIDTH = 8f  // เพิ่มความหนาของเส้นให้เห็นชัดขึ้น
-        private const val LANDMARK_RADIUS = 8f       // เพิ่มขนาดจุดให้เห็นชัดขึ้น
+    override fun surfaceCreated(holder: SurfaceHolder) {}
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        currentResult = null
     }
 }

@@ -26,8 +26,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String username = 'User';
-  // เป็น
-  late Stream<RemoteMessage> _notificationsStream;
+  // เป็นนี้:
+  Stream<RemoteMessage> _notificationsStream = Stream.empty();
   bool _isFirstNotification = true;
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
@@ -68,6 +68,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _getNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final notificationsJson = prefs.getString('notifications') ?? '[]';
+    return List<Map<String, dynamic>>.from(
+        jsonDecode(notificationsJson).map((x) => Map<String, dynamic>.from(x)));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +82,8 @@ class _HomePageState extends State<HomePage> {
     _fetchUserData();
     // _setupNotifications(); // เพิ่มบรรทัดนี้
     initializeNotifications(); // เพิ่มบรรทัดนี้
-    _initializeFirebaseMessaging();
+    // _initializeFirebaseMessaging();
+    _setupNotificationListeners(); // เพิ่มบรรทัดนี้
     _checkAuthAndInitialize();
   }
 
@@ -84,7 +92,7 @@ class _HomePageState extends State<HomePage> {
       if (user != null) {
         // เมื่อ Login สำเร็จ
         initializeNotifications();
-        _initializeFirebaseMessaging();
+        // _initializeFirebaseMessaging();
         await _subscribeToNotifications();
       } else {
         // เมื่อ Logout หรือยังไม่ได้ login
@@ -98,47 +106,89 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // ใน _HomePageState class เพิ่มฟังก์ชัน
-  void _saveNotificationToFirestore(RemoteMessage message) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+  void _setupNotificationListeners() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (mounted && message.notification != null) {
+        _saveNotificationToLocalStorage(message);
 
-    await FirebaseFirestore.instance.collection('notifications').add({
-      'userId': user.uid,
-      'title': message.notification?.title,
-      'body': message.notification?.body,
-      'timestamp': FieldValue.serverTimestamp(),
-      'imageUrl': message.data['imageUrl'],
-      'additionalData': message.data,
-      'isRead': false,
+        // แสดงป๊อปอัพการแจ้งเตือน
+        showDialog(
+          context: context,
+          builder: (context) => NotificationDialog(
+            notificationData: {
+              'title': message.notification?.title,
+              'body': message.notification?.body,
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+              ...message.data
+            },
+          ),
+        );
+      }
+    });
+
+    // เพิ่มการรับฟังเหตุการณ์อื่นๆ ตามต้องการ
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _saveNotificationToLocalStorage(message);
+    });
+
+    // ตรวจสอบการเปิดแอปจากการแจ้งเตือน
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? message) {
+      if (message != null) {
+        _saveNotificationToLocalStorage(message);
+      }
     });
   }
 
-// แก้ไขใน _initializeFirebaseMessaging()
-  void _initializeFirebaseMessaging() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      _notificationsStream = FirebaseMessaging.onMessage;
+  // ใน _HomePageState class เพิ่มฟังก์ชัน
+  // ใน Home.dart
+  void _saveNotificationToLocalStorage(RemoteMessage message) async {
+    final prefs = await SharedPreferences.getInstance();
 
-      _notificationsStream.listen((RemoteMessage message) {
-        if (mounted && message.notification != null) {
-          _saveNotificationToFirestore(message); // เพิ่มบรรทัดนี้
+    // โหลดข้อมูลเดิม
+    final notificationsJson = prefs.getString('notifications') ?? '[]';
+    final notifications = List<Map<String, dynamic>>.from(
+        jsonDecode(notificationsJson).map((x) => Map<String, dynamic>.from(x)));
 
-          showDialog(
-            context: context,
-            builder: (context) => NotificationDialog(
-              notificationData: {
-                'title': message.notification?.title,
-                'body': message.notification?.body,
-                'timestamp': DateTime.now().millisecondsSinceEpoch,
-                ...message.data
-              },
-            ),
-          );
-        }
-      });
-    }
+    // เพิ่มการแจ้งเตือนใหม่
+    notifications.insert(0, {
+      'title': message.notification?.title,
+      'body': message.notification?.body,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'data': message.data,
+      'isRead': false,
+    });
+
+    // บันทึกกลับ
+    await prefs.setString('notifications', jsonEncode(notifications));
   }
+
+// // แก้ไขใน _initializeFirebaseMessaging()
+//   void _initializeFirebaseMessaging() {
+//     final user = FirebaseAuth.instance.currentUser;
+//     if (user != null) {
+//       _notificationsStream = FirebaseMessaging.onMessage;
+
+//       _notificationsStream.listen((RemoteMessage message) {
+//         if (mounted && message.notification != null) {
+//           _saveNotificationToFirestore(message); // เพิ่มบรรทัดนี้
+
+//           showDialog(
+//             context: context,
+//             builder: (context) => NotificationDialog(
+//               notificationData: {
+//                 'title': message.notification?.title,
+//                 'body': message.notification?.body,
+//                 'timestamp': DateTime.now().millisecondsSinceEpoch,
+//                 ...message.data
+//               },
+//             ),
+//           );
+//         }
+//       });
+//     }
+//   }
 
   void initializeNotifications() {
     const platform = MethodChannel('com.example.regaproject/notification');
@@ -364,14 +414,13 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: StreamBuilder<RemoteMessage>(
-          // เปลี่ยนจาก QuerySnapshot เป็น RemoteMessage
-          stream: _notificationsStream,
+        leading: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _getNotifications(),
           builder: (context, snapshot) {
-            // ปรับการตรวจสอบข้อมูล
             bool hasUnreadMessage = false;
-            if (snapshot.hasData && snapshot.data != null) {
-              hasUnreadMessage = true; // หรือตามลอจิกที่ต้องการ
+            if (snapshot.hasData) {
+              hasUnreadMessage =
+                  snapshot.data!.any((item) => item['isRead'] == false);
             }
 
             return Stack(

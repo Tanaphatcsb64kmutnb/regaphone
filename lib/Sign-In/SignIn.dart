@@ -220,17 +220,458 @@
 //   }
 // }
 
+// import 'package:flutter/material.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:regaproject/Home/Home.dart';
+// import '../Sign-Up/SignUp.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
+// import '../Home/notification_dialog.dart'; // หรือที่อยู่ที่ถูกต้องของ NotificationDialog
+// import '../services/session_service.dart';
+
+// class SignInPage extends StatefulWidget {
+//   final Map<String, dynamic>? pendingNotification; // เพิ่มพารามิเตอร์นี้
+
+//   const SignInPage({
+//     super.key,
+//     this.pendingNotification,
+//   });
+
+//   @override
+//   _SignInPageState createState() => _SignInPageState();
+// }
+
+// class _SignInPageState extends State<SignInPage> {
+//   final _formKey = GlobalKey<FormState>();
+//   final TextEditingController _usernameController = TextEditingController();
+//   final TextEditingController _passwordController = TextEditingController();
+//   final FirebaseAuth _auth = FirebaseAuth.instance;
+//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+//   bool _isLoading = false;
+
+//   // void _signIn() async {
+//   //   if (_formKey.currentState!.validate()) {
+//   //     setState(() {
+//   //       _isLoading = true;
+//   //     });
+
+//   //     try {
+//   //       // First, get the user's email from their username
+//   //       final String email =
+//   //           await _getUserEmailFromUsername(_usernameController.text.trim());
+
+//   //       // Then sign in with the email and password
+//   //       final UserCredential userCredential =
+//   //           await _auth.signInWithEmailAndPassword(
+//   //         email: email,
+//   //         password: _passwordController.text.trim(),
+//   //       );
+
+//   //       // บันทึก FCM Token หลัง login สำเร็จ
+//   //       await _saveFCMToken(userCredential.user!.uid);
+
+//   //       // ดึงข้อมูลผู้ใช้จาก Firestore
+//   //       final userDoc = await _firestore
+//   //           .collection('users')
+//   //           .doc(userCredential.user!.uid)
+//   //           .get();
+//   //       final userData = userDoc.data() as Map<String, dynamic>;
+
+//   //       // บันทึก session
+//   //       await SessionService.saveSession({
+//   //         'uid': userCredential.user!.uid,
+//   //         'email': email,
+//   //         'username': userData['username'],
+//   //         'lastLogin': DateTime.now().toIso8601String(),
+//   //       });
+
+//   //       if (mounted) {
+//   //         // Show success popup and navigate to HomePage
+//   //         _showLoginSuccessPopup(context);
+//   //       }
+
+//   //       print('User signed in successfully: ${userCredential.user?.email}');
+//   //     } on FirebaseAuthException catch (e) {
+//   //       String message;
+//   //       if (e.code == 'user-not-found') {
+//   //         message = 'No user found with this username.';
+//   //       } else if (e.code == 'wrong-password') {
+//   //         message = 'Incorrect password.';
+//   //       } else {
+//   //         message = 'Login failed: ${e.message}';
+//   //       }
+
+//   //       // Show error dialog
+//   //       if (mounted) {
+//   //         _showErrorDialog(message);
+//   //       }
+//   //     } catch (e) {
+//   //       if (mounted) {
+//   //         _showErrorDialog('An error occurred. Please try again.');
+//   //       }
+//   //       print('Error during sign in: $e');
+//   //     } finally {
+//   //       if (mounted) {
+//   //         setState(() {
+//   //           _isLoading = false;
+//   //         });
+//   //       }
+//   //     }
+//   //   }
+//   // }
+
+//   void _signIn() async {
+//     if (_formKey.currentState!.validate()) {
+//       setState(() {
+//         _isLoading = true;
+//       });
+
+//       try {
+//         // ดึง email จาก username
+//         final String email =
+//             await _getUserEmailFromUsername(_usernameController.text.trim());
+
+//         // เข้าสู่ระบบด้วย email และ password
+//         final UserCredential userCredential =
+//             await _auth.signInWithEmailAndPassword(
+//           email: email,
+//           password: _passwordController.text.trim(),
+//         );
+
+//         // บันทึก FCM Token
+//         await _saveFCMToken(userCredential.user!.uid);
+
+//         // ดึงข้อมูลผู้ใช้จาก Firestore
+//         final userDoc = await _firestore
+//             .collection('users')
+//             .doc(userCredential.user!.uid)
+//             .get();
+
+//         // แปลงข้อมูลเป็น Map
+//         final userData = userDoc.data() as Map<String, dynamic>;
+
+//         // บันทึก session
+//         await SessionService.saveSession({
+//           'uid': userCredential.user!.uid,
+//           'email': email,
+//           'username': userData['username'],
+//           'lastLogin': DateTime.now().toIso8601String(),
+//         });
+
+//         if (mounted) {
+//           _showLoginSuccessPopup(context);
+//         }
+
+//         print('User signed in successfully: ${userCredential.user?.email}');
+//       } on FirebaseAuthException catch (e) {
+//         String message;
+//         if (e.code == 'user-not-found') {
+//           message = 'No user found with this username.';
+//         } else if (e.code == 'wrong-password') {
+//           message = 'Incorrect password.';
+//         } else {
+//           message = 'Login failed: ${e.message}';
+//         }
+
+//         // Show error dialog
+//         if (mounted) {
+//           _showErrorDialog(message);
+//         }
+//       } catch (e) {
+//         if (mounted) {
+//           _showErrorDialog('An error occurred. Please try again.');
+//         }
+//         print('Error during sign in: $e');
+//       } finally {
+//         if (mounted) {
+//           setState(() {
+//             _isLoading = false;
+//           });
+//         }
+//       }
+//     }
+//   }
+
+//   Future<String> _getUserEmailFromUsername(String username) async {
+//     try {
+//       final QuerySnapshot querySnapshot = await _firestore
+//           .collection('users')
+//           .where('username', isEqualTo: username)
+//           .limit(1)
+//           .get();
+
+//       if (querySnapshot.docs.isEmpty) {
+//         throw FirebaseAuthException(
+//           code: 'user-not-found',
+//           message: 'No user found with this username.',
+//         );
+//       }
+
+//       final String email = querySnapshot.docs.first.get('email') as String;
+//       return email;
+//     } catch (e) {
+//       print('Error getting email from username: $e');
+//       rethrow;
+//     }
+//   }
+
+//   void _showErrorDialog(String message) {
+//     showDialog(
+//       context: context,
+//       builder: (context) => AlertDialog(
+//         title: const Text('Error'),
+//         content: Text(message),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: const Text('OK'),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Future<void> _saveFCMToken(String userId) async {
+//     try {
+//       final fcmToken = await FirebaseMessaging.instance.getToken();
+
+//       await FirebaseFirestore.instance.collection('users').doc(userId).update({
+//         'fcmToken': fcmToken,
+//         'tokenUpdatedAt': FieldValue.serverTimestamp()
+//       });
+
+//       print('FCM Token saved successfully');
+//     } catch (e) {
+//       print('Error saving FCM token: $e');
+//     }
+//   }
+
+//   // แก้ไขฟังก์ชัน _showLoginSuccessPopup
+//   void _showLoginSuccessPopup(BuildContext context) {
+//     showDialog(
+//       context: context,
+//       barrierDismissible: false,
+//       builder: (context) => AlertDialog(
+//         title: const Text('Welcome'),
+//         content: const Text('You have successfully logged in!'),
+//         actions: [
+//           TextButton(
+//             onPressed: () {
+//               Navigator.of(context).pop(); // ปิด dialog
+
+//               if (widget.pendingNotification != null) {
+//                 // ถ้ามีการแจ้งเตือนที่รอ
+//                 Navigator.of(context).pushReplacement(
+//                   MaterialPageRoute(
+//                     builder: (context) => NotificationDialog(
+//                       notificationData: widget.pendingNotification!,
+//                     ),
+//                   ),
+//                 );
+//               } else {
+//                 // ถ้าไม่มีการแจ้งเตือน
+//                 Navigator.of(context).pushReplacement(
+//                   MaterialPageRoute(
+//                     builder: (context) => const HomePage(),
+//                   ),
+//                 );
+//               }
+//             },
+//             child: const Text('OK'),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   void _signInWithGoogle() async {
+//     // Implement Google Sign-In logic here
+//     print('Google Sign-In button clicked');
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       body: Stack(
+//         children: [
+//           // Background Image
+//           Container(
+//             decoration: const BoxDecoration(
+//               image: DecorationImage(
+//                 image: AssetImage('assets/img/yogabg.png'),
+//                 fit: BoxFit.cover,
+//               ),
+//             ),
+//           ),
+//           // Overlay
+//           Container(
+//             color: Colors.black.withOpacity(0.5),
+//           ),
+//           // Main Content
+//           Center(
+//             child: SingleChildScrollView(
+//               child: Padding(
+//                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
+//                 child: Form(
+//                   key: _formKey,
+//                   child: Column(
+//                     mainAxisSize: MainAxisSize.min,
+//                     children: [
+//                       const Text(
+//                         'REGA',
+//                         style: TextStyle(
+//                           fontSize: 40,
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.white,
+//                         ),
+//                       ),
+//                       const SizedBox(height: 40),
+//                       TextFormField(
+//                         controller: _usernameController,
+//                         style: const TextStyle(color: Colors.white),
+//                         decoration: InputDecoration(
+//                           labelText: 'USERNAME',
+//                           labelStyle: const TextStyle(color: Colors.white),
+//                           prefixIcon:
+//                               const Icon(Icons.person, color: Colors.white),
+//                           border: OutlineInputBorder(
+//                             borderRadius: BorderRadius.circular(8),
+//                           ),
+//                           filled: true,
+//                           fillColor: Colors.white.withOpacity(0.3),
+//                           enabled: !_isLoading,
+//                         ),
+//                         validator: (value) {
+//                           if (value == null || value.isEmpty) {
+//                             return 'Please enter your username';
+//                           }
+//                           return null;
+//                         },
+//                       ),
+//                       const SizedBox(height: 16),
+//                       TextFormField(
+//                         controller: _passwordController,
+//                         style: const TextStyle(color: Colors.white),
+//                         decoration: InputDecoration(
+//                           labelText: 'PASSWORD',
+//                           labelStyle: const TextStyle(color: Colors.white),
+//                           prefixIcon:
+//                               const Icon(Icons.lock, color: Colors.white),
+//                           border: OutlineInputBorder(
+//                             borderRadius: BorderRadius.circular(8),
+//                           ),
+//                           filled: true,
+//                           fillColor: Colors.white.withOpacity(0.3),
+//                           enabled: !_isLoading,
+//                         ),
+//                         obscureText: true,
+//                         validator: (value) {
+//                           if (value == null || value.isEmpty) {
+//                             return 'Please enter your password';
+//                           }
+//                           return null;
+//                         },
+//                       ),
+//                       const SizedBox(height: 24),
+//                       SizedBox(
+//                         width: double.infinity,
+//                         child: ElevatedButton(
+//                           onPressed: _isLoading ? null : _signIn,
+//                           style: ElevatedButton.styleFrom(
+//                             padding: const EdgeInsets.symmetric(vertical: 12),
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius: BorderRadius.circular(8),
+//                             ),
+//                             backgroundColor: Colors.white.withOpacity(0.9),
+//                           ),
+//                           child: _isLoading
+//                               ? const SizedBox(
+//                                   height: 20,
+//                                   width: 20,
+//                                   child: CircularProgressIndicator(
+//                                     strokeWidth: 2,
+//                                     valueColor: AlwaysStoppedAnimation<Color>(
+//                                         Colors.black),
+//                                   ),
+//                                 )
+//                               : const Text(
+//                                   'LOGIN',
+//                                   style: TextStyle(
+//                                     fontSize: 16,
+//                                     color: Colors.black,
+//                                   ),
+//                                 ),
+//                         ),
+//                       ),
+//                       const SizedBox(height: 16),
+//                       TextButton(
+//                         onPressed: _isLoading
+//                             ? null
+//                             : () {
+//                                 Navigator.push(
+//                                   context,
+//                                   MaterialPageRoute(
+//                                     builder: (context) => const SignUpPage(),
+//                                   ),
+//                                 );
+//                               },
+//                         child: const Text(
+//                           'Don\'t have an account? SIGN UP',
+//                           style: TextStyle(color: Colors.white),
+//                         ),
+//                       ),
+//                       const SizedBox(height: 16),
+//                       ElevatedButton.icon(
+//                         onPressed: _isLoading ? null : _signInWithGoogle,
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: Colors.white,
+//                           foregroundColor: Colors.black,
+//                           padding: const EdgeInsets.symmetric(
+//                             vertical: 12,
+//                             horizontal: 24,
+//                           ),
+//                           shape: RoundedRectangleBorder(
+//                             borderRadius: BorderRadius.circular(8),
+//                           ),
+//                         ),
+//                         icon: const Icon(
+//                           Icons.g_mobiledata,
+//                           size: 24,
+//                         ),
+//                         label: const Text('Sign in with Google'),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   @override
+//   void dispose() {
+//     _usernameController.dispose();
+//     _passwordController.dispose();
+//     super.dispose();
+//   }
+// }
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:regaproject/Home/Home.dart';
 import '../Sign-Up/SignUp.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import '../Home/notification_dialog.dart'; // หรือที่อยู่ที่ถูกต้องของ NotificationDialog
+import '../Home/notification_dialog.dart';
 import '../services/session_service.dart';
+import '../changepassword/changeuseemail.dart'; // Import the password reset page
 
 class SignInPage extends StatefulWidget {
-  final Map<String, dynamic>? pendingNotification; // เพิ่มพารามิเตอร์นี้
+  final Map<String, dynamic>? pendingNotification;
 
   const SignInPage({
     super.key,
@@ -249,77 +690,6 @@ class _SignInPageState extends State<SignInPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   bool _isLoading = false;
-
-  // void _signIn() async {
-  //   if (_formKey.currentState!.validate()) {
-  //     setState(() {
-  //       _isLoading = true;
-  //     });
-
-  //     try {
-  //       // First, get the user's email from their username
-  //       final String email =
-  //           await _getUserEmailFromUsername(_usernameController.text.trim());
-
-  //       // Then sign in with the email and password
-  //       final UserCredential userCredential =
-  //           await _auth.signInWithEmailAndPassword(
-  //         email: email,
-  //         password: _passwordController.text.trim(),
-  //       );
-
-  //       // บันทึก FCM Token หลัง login สำเร็จ
-  //       await _saveFCMToken(userCredential.user!.uid);
-
-  //       // ดึงข้อมูลผู้ใช้จาก Firestore
-  //       final userDoc = await _firestore
-  //           .collection('users')
-  //           .doc(userCredential.user!.uid)
-  //           .get();
-  //       final userData = userDoc.data() as Map<String, dynamic>;
-
-  //       // บันทึก session
-  //       await SessionService.saveSession({
-  //         'uid': userCredential.user!.uid,
-  //         'email': email,
-  //         'username': userData['username'],
-  //         'lastLogin': DateTime.now().toIso8601String(),
-  //       });
-
-  //       if (mounted) {
-  //         // Show success popup and navigate to HomePage
-  //         _showLoginSuccessPopup(context);
-  //       }
-
-  //       print('User signed in successfully: ${userCredential.user?.email}');
-  //     } on FirebaseAuthException catch (e) {
-  //       String message;
-  //       if (e.code == 'user-not-found') {
-  //         message = 'No user found with this username.';
-  //       } else if (e.code == 'wrong-password') {
-  //         message = 'Incorrect password.';
-  //       } else {
-  //         message = 'Login failed: ${e.message}';
-  //       }
-
-  //       // Show error dialog
-  //       if (mounted) {
-  //         _showErrorDialog(message);
-  //       }
-  //     } catch (e) {
-  //       if (mounted) {
-  //         _showErrorDialog('An error occurred. Please try again.');
-  //       }
-  //       print('Error during sign in: $e');
-  //     } finally {
-  //       if (mounted) {
-  //         setState(() {
-  //           _isLoading = false;
-  //         });
-  //       }
-  //     }
-  //   }
-  // }
 
   void _signIn() async {
     if (_formKey.currentState!.validate()) {
@@ -447,7 +817,6 @@ class _SignInPageState extends State<SignInPage> {
     }
   }
 
-  // แก้ไขฟังก์ชัน _showLoginSuccessPopup
   void _showLoginSuccessPopup(BuildContext context) {
     showDialog(
       context: context,
@@ -458,10 +827,9 @@ class _SignInPageState extends State<SignInPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // ปิด dialog
+              Navigator.of(context).pop();
 
               if (widget.pendingNotification != null) {
-                // ถ้ามีการแจ้งเตือนที่รอ
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) => NotificationDialog(
@@ -470,7 +838,6 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 );
               } else {
-                // ถ้าไม่มีการแจ้งเตือน
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) => const HomePage(),
@@ -619,6 +986,24 @@ class _SignInPageState extends State<SignInPage> {
                         child: const Text(
                           'Don\'t have an account? SIGN UP',
                           style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(height: 8), // Add spacing between links
+                      TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ChangeUseEmailPage(),
+                                  ),
+                                );
+                              },
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(color: Colors.white70),
                         ),
                       ),
                       const SizedBox(height: 16),

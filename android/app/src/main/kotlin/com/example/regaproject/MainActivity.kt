@@ -23,6 +23,8 @@ class MainActivity : FlutterActivity() {
     private val VIDEO_REQUEST_CODE = 1001
     private lateinit var cameraMethodChannel: MethodChannel
     private lateinit var notificationMethodChannel: MethodChannel
+    private var poseLandmarkerHelper: PoseLandmarkerHelper? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -68,6 +70,18 @@ class MainActivity : FlutterActivity() {
                     playRestVideo()
                     result.success(null)
                 }
+                 "setAllowedPoses" -> {
+            val poseNames = call.argument<List<String>>("poseNames")
+            if (poseNames != null) {
+                // ส่งต่อไปยัง LiveCameraPlatformView รวมถึง PoseLandmarkerHelper
+                // ในที่นี้เราต้องใช้วิธีส่งผ่าน event ไปยัง LiveCameraPlatformView
+                // เนื่องจากเราไม่มีอ้างอิงโดยตรงถึง LiveCameraPlatformView จาก MainActivity
+                cameraMethodChannel.invokeMethod("internalSetAllowedPoses", mapOf("poseNames" to poseNames))
+                result.success(true)
+            } else {
+                result.error("INVALID_ARGUMENT", "Invalid pose names", null)
+            }
+        }
                 else -> result.notImplemented()
             }
         }
@@ -90,9 +104,9 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun playRestVideo() {
-        val intent = Intent(this, VideoActivity::class.java)
-        startActivityForResult(intent, VIDEO_REQUEST_CODE)
-    }
+    val intent = Intent(this, VideoActivity::class.java)
+    startActivityForResult(intent, VIDEO_REQUEST_CODE)
+}
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
