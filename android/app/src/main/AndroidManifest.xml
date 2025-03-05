@@ -29,6 +29,7 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
+            android:usesCleartextTraffic="true"
             android:windowSoftInputMode="adjustResize">
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
@@ -45,10 +46,12 @@
         </activity>
 
         <!-- VideoActivity remains the same -->
-        <activity
+        <!-- <activity
             android:name=".VideoActivity"
             android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> -->
+
+            <activity android:name=".VideoActivity" android:theme="@style/Theme.AppCompat.NoActionBar" />
 
         <!-- Updated Firebase Service -->
         <service
