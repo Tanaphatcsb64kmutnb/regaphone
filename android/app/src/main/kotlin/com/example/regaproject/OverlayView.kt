@@ -113,7 +113,7 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
 
                 // วาดตัวเลขแสดงค่ามุม (Angle) ที่คำนวณได้
                 val angleTextPaint = Paint().apply {
-                    color = Color.WHITE
+                    color = Color.WHITE+
                     textSize = 100f
                     style = Paint.Style.FILL
                     isAntiAlias = true
