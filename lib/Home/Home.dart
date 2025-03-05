@@ -4,11 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../Sign-In/SignIn.dart';
 import '../CameraMediapipe/cameramediapipe.dart';
 import '../yogaprogrampose/YogaListPage.dart';
-import '../history/HistoryPage.dart';
+import '../History/HistoryPage.dart';
 import '../Favorite/FavoritePage.dart';
 import '../Notification/NotificationsPage.dart';
 import './notification_dialog.dart';
-import '../services/notification_service.dart';
 import '../services/in_app_message_dialog.dart';
 import 'package:flutter/services.dart'; // สำหรับ MethodChannel
 import 'package:firebase_messaging/firebase_messaging.dart';
