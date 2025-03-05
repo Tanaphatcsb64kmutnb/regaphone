@@ -1,6 +1,12 @@
 name: Build Flutter App
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - zen
+  pull_request:
+    branches:
+      - zen
 
 jobs:
   build:
