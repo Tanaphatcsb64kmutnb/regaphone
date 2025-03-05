@@ -30,5 +30,11 @@ jobs:
         run: |
           echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
 
+      - name: Flutter clean
+        run: flutter clean
+
+      - name: Flutter pub get
+        run: flutter pub get
+
       - name: Build APK
         run: flutter build apk
