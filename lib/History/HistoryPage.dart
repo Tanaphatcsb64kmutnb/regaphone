@@ -152,7 +152,7 @@ import 'package:intl/intl.dart';
 import '../CameraMediapipe/pose_result.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({Key? key}) : super(key: key);
+  const HistoryPage({super.key});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();

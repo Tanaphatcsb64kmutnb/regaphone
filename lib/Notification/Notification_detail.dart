@@ -9,13 +9,13 @@ class NotificationDetailPage extends StatelessWidget {
   final Map<String, dynamic>? additionalData;
 
   const NotificationDetailPage({
-    Key? key,
+    super.key,
     required this.title,
     required this.body,
     required this.timestamp,
     this.imageUrl,
     this.additionalData,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
