@@ -1,0 +1,4 @@
+-keep class javax.lang.model.** { *; }
+-keep class autovalue.shaded.com.squareup.javapoet.** { *; }
+-keepattributes *Annotation*
+-keep class com.google.auto.value.** { *; }

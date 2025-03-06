@@ -379,7 +379,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // signingConfig = signingConfigs.debug
+
         }
     }
 }
@@ -390,6 +394,8 @@ flutter {
 
 dependencies {
     // Existing dependencies
+    implementation 'com.google.auto.value:auto-value-annotations:1.9'
+    annotationProcessor 'com.google.auto.value:auto-value:1.9'
     implementation 'androidx.core:core-ktx:1.8.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
