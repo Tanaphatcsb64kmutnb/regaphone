@@ -1,4 +1,7 @@
--keep class javax.lang.model.** { *; }
--keep class autovalue.shaded.com.squareup.javapoet.** { *; }
--keepattributes *Annotation*
--keep class com.google.auto.value.** { *; }
+# Suppress warnings for missing javax.lang.model classes
+-dontwarn javax.lang.model.SourceVersion
+-dontwarn javax.lang.model.element.Element
+-dontwarn javax.lang.model.element.ElementKind
+-dontwarn javax.lang.model.type.TypeMirror
+-dontwarn javax.lang.model.type.TypeVisitor
+-dontwarn javax.lang.model.util.SimpleTypeVisitor8

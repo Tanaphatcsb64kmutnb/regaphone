@@ -32,13 +32,13 @@ This ensures that sensitive configuration details do not get exposed in your ver
 
 # 🔧 Setting Up Environment Variables
 To securely store Firebase credentials, add the following variables to your `.env` file:\
-find this value in firebase
+find this value in firebase in project setting
 ```ini
 FIREBASE_API_KEY=
 FIREBASE_APP_ID=
 FIREBASE_MESSAGING_SENDER_ID=
 FIREBASE_PROJECT_ID=
-FIREBASE_AUTH_DOMAIN=
+FIREBASE_AUTH_DOMAIN=PROJECT_ID+.firebaseapp.com
 FIREBASE_STORAGE_BUCKET=
 FIREBASE_MEASUREMENT_ID=
 FIREBASE_IOS_CLIENT_ID=
