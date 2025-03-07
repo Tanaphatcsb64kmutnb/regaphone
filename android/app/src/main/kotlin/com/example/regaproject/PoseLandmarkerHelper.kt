@@ -45,7 +45,7 @@ class PoseLandmarkerHelper(
 
     // สำหรับส่ง landmarks ไป Server (ถ้าต้องการ)
     private var lastProcessedTime = 0L
-    private val PROCESS_INTERVAL = 500L
+    private val PROCESS_INTERVAL = 1000L
     private val isProcessingHttp = AtomicBoolean(false)
     private val client = OkHttpClient.Builder()
         .connectTimeout(1, TimeUnit.SECONDS)
