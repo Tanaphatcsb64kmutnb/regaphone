@@ -47,3 +47,5 @@ FIREBASE_IOS_BUNDLE_ID=
 
 Make sure to **never commit** your `.env` file to version control to keep your credentials safe! 🚀
 
+Phone distance 180 - 190 cm
+Phone high 60 cm
