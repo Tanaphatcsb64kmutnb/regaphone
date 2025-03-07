@@ -49,6 +49,17 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
   Map<String, double> poseScores = {};
   String? programHistoryId;
 
+  // เพิ่มตัวแปรเหล่านี้ต่อจากตัวแปรอื่นๆ ที่มีอยู่แล้ว
+  double cumulativeScore = 0.0; // คะแนนสะสมทั้งหมด
+  double lastUpdateTime = 0.0; // เวลาล่าสุดที่อัพเดทคะแนน (เพื่อควบคุมความถี่)
+
+  // อัตราการเพิ่มคะแนน (สามารถปรับได้ตามต้องการ)
+  final double scoreMultiplier = 0.1; // ตัวคูณคะแนน - 100% = 10 คะแนน/ครั้ง
+
+  // เพิ่มตัวแปรสำหรับแสดงผลเอฟเฟค
+  bool showScoreEffect = false;
+  double lastAddedScore = 0.0;
+
   // เพิ่มตัวแปรสำหรับเก็บค่า predictions
   Map<String, List<double>> posePredictions = {};
   Map<String, String> poseIdToName = {};
@@ -174,17 +185,56 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
 
             isConnected = true;
 
-            // เก็บค่า prediction ระหว่างเล่น
+            // บันทึกข้อมูลสำหรับวิเคราะห์ (ยังคงทำเสมอ)
             if (currentPoseIndex < yogaPoses.length) {
               final currentPoseId = yogaPoses[currentPoseIndex]['id'];
               if (!posePredictions.containsKey(currentPoseId)) {
                 posePredictions[currentPoseId] = [];
               }
-
-              // บันทึกคะแนนจากความคล้ายคลึงของมุม
               posePredictions[currentPoseId]!.add(angleScore);
-              debugPrint(
-                  'Added angle score for pose $currentPoseId: $angleScore%');
+
+              // เพิ่มคะแนนเมื่อทำท่าถูกต้อง และไม่อยู่ในช่วงพัก
+              if (!isResting && currentPoseIndex < yogaPoses.length) {
+                // ตรวจสอบว่าท่าที่ทำนายได้ตรงกับท่าที่ล็อกไว้หรือไม่
+                final expectedPoseName = yogaPoses[currentPoseIndex]['name'];
+
+                if (currentPredictedPose == expectedPoseName) {
+                  // คำนวณคะแนนเมื่อทำท่าถูกต้อง
+                  double addedScore = angleScore * scoreMultiplier;
+
+                  // ตรวจสอบไม่ให้คะแนนเกิน 100
+                  if (cumulativeScore + addedScore > 100) {
+                    addedScore = 100 - cumulativeScore; // เพิ่มแค่พอให้ครบ 100
+
+                    if (addedScore <= 0) {
+                      // กรณีคะแนนครบ 100 แล้ว ไม่เพิ่มคะแนนอีก
+                      addedScore = 0;
+                    }
+                  }
+
+                  cumulativeScore += addedScore;
+
+                  // แสดงเอฟเฟคเมื่อได้คะแนน (เฉพาะถ้าได้คะแนนเพิ่ม)
+                  if (addedScore > 0) {
+                    lastAddedScore = addedScore;
+                    showScoreEffect = true;
+                    Future.delayed(const Duration(milliseconds: 800), () {
+                      if (mounted) {
+                        setState(() {
+                          showScoreEffect = false;
+                        });
+                      }
+                    });
+
+                    debugPrint(
+                        'Correct pose! Added ${addedScore.toStringAsFixed(1)} points. Total: ${cumulativeScore.toStringAsFixed(1)}/100');
+                  }
+                } else {
+                  // ท่าไม่ตรงกับที่คาดหวัง - ไม่เพิ่มคะแนน
+                  debugPrint(
+                      'Incorrect pose: Expected $expectedPoseName but got $currentPredictedPose');
+                }
+              }
             }
           });
           break;
@@ -271,7 +321,7 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
       debugPrint("Error sending allowed poses: $e");
     }
   }
-
+  // // อัปเดตฟังก์ชัน savePoseScore (ถ้าจำเป็น)
   // Future<void> savePoseScore() async {
   //   if (currentPoseIndex >= yogaPoses.length || programHistoryId == null) {
   //     debugPrint('Cannot save pose score: Invalid index or missing history ID');
@@ -332,14 +382,13 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
   //     await completer.future;
   //   } catch (e) {
   //     debugPrint("Critical error saving pose score: $e");
-  //     // อาจเพิ่มการแจ้งเตือนผู้ใช้ที่นี่
   //   }
 
   //   // ล้างค่า predictions สำหรับท่าต่อไปหลังจากบันทึกเสร็จแล้ว
   //   posePredictions.remove(poseId);
   // }
 
-  // อัปเดตฟังก์ชัน savePoseScore (ถ้าจำเป็น)
+  // แก้ไขฟังก์ชัน savePoseScore - บันทึกคะแนนสะสมแทนค่าเฉลี่ย
   Future<void> savePoseScore() async {
     if (currentPoseIndex >= yogaPoses.length || programHistoryId == null) {
       debugPrint('Cannot save pose score: Invalid index or missing history ID');
@@ -352,7 +401,7 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
     // รอให้มีการเก็บข้อมูลอย่างน้อย 3 วินาที
     await Future.delayed(const Duration(seconds: 3));
 
-    // คำนวณค่าเฉลี่ยของ predictions ทั้งหมด
+    // คำนวณค่าเฉลี่ยของ predictions ทั้งหมด (ยังคงเก็บไว้เพื่อข้อมูลทางสถิติ)
     final predictions = posePredictions[poseId] ?? [];
     if (predictions.isEmpty) {
       debugPrint('No predictions found for pose $poseId - Retrying...');
@@ -365,21 +414,25 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
       }
     }
 
+    // คำนวณค่าเฉลี่ยจาก predictions (เก็บเพื่อข้อมูลเพิ่มเติม)
     final avgScore = predictions.isNotEmpty
         ? predictions.reduce((a, b) => a + b) / predictions.length
         : 0.0;
 
     debugPrint(
         'Average score for pose $poseId: $avgScore (from ${predictions.length} predictions)');
+    debugPrint('Cumulative score for this pose: $cumulativeScore');
 
     try {
-      // เพิ่ม CompleterFuture เพื่อติดตามการบันทึก
       final completer = Completer<void>();
 
       await FirebaseFirestore.instance.collection('YogaPoseHistory').add({
         'Pose_id': FirebaseFirestore.instance.doc('Yoga Pose/$poseId'),
-        'Pose_score': avgScore,
-        'Performance': _getPerformanceLevel(avgScore),
+        'Pose_score': cumulativeScore, // ใช้คะแนนสะสมแทนค่าเฉลี่ย
+        'Avg_pose_score':
+            avgScore, // เก็บค่าเฉลี่ยไว้ด้วย (อาจมีประโยชน์ในอนาคต)
+        'Performance':
+            _getPerformanceLevel(cumulativeScore), // ปรับการประเมินผล
         'Date': DateTime.now(),
         'Time': DateTime.now(),
         'User': FirebaseFirestore.instance.doc('Users/$currentUser'),
@@ -389,7 +442,7 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
         'prediction_count': predictions.length,
         'predictions': predictions,
       }).then((_) {
-        poseScores[poseId] = avgScore;
+        poseScores[poseId] = cumulativeScore;
         completer.complete();
       }).catchError((error) {
         debugPrint("Error saving pose score: $error");
@@ -404,6 +457,11 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
 
     // ล้างค่า predictions สำหรับท่าต่อไปหลังจากบันทึกเสร็จแล้ว
     posePredictions.remove(poseId);
+
+    // รีเซ็ตคะแนนสะสมสำหรับท่าต่อไป
+    setState(() {
+      cumulativeScore = 0.0;
+    });
   }
 
   String _getPerformanceLevel(double score) {
@@ -636,6 +694,64 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
               ),
             ),
           ),
+
+          // เพิ่มส่วนแสดงคะแนนสะสม (ด้านบนขวา)
+          Positioned(
+            top: 30,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.stars,
+                    color: Colors.amber,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${cumulativeScore.toStringAsFixed(0)}/100',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // เพิ่มเอฟเฟคแสดงคะแนนที่ได้รับ
+          if (showScoreEffect)
+            Positioned(
+              top: 80,
+              right: 30,
+              child: AnimatedOpacity(
+                opacity: showScoreEffect ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  '+${lastAddedScore.toStringAsFixed(1)}',
+                  style: TextStyle(
+                    color: Colors.amber,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 5.0,
+                        color: Colors.black.withOpacity(0.7),
+                        offset: const Offset(1.0, 1.0),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           if (widget.programId != null && yogaPoses.isNotEmpty)
             Positioned(
               bottom: 60,
