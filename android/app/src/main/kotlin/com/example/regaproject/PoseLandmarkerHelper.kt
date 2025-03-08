@@ -51,6 +51,9 @@ class PoseLandmarkerHelper(
         .connectTimeout(1, TimeUnit.SECONDS)
         .readTimeout(1, TimeUnit.SECONDS)
         .build()
+        
+    // ประกาศตัวแปรเพื่อเก็บข้อมูลความแตกต่างของมุม
+    private var angleDiscrepancies = mutableMapOf<String, Map<String, Double>>()
 
     init {
         setupPoseLandmarker()
@@ -136,7 +139,7 @@ class PoseLandmarkerHelper(
     }
 
     /**
-     * แปลง ImageProxy เป็น Bitmap โดยไม่ทำการ flip (ให้ MediaPipe รับภาพ “ปกติ”)
+     * แปลง ImageProxy เป็น Bitmap โดยไม่ทำการ flip (ให้ MediaPipe รับภาพ "ปกติ")
      */
     private fun convertImageProxyToBitmap(
         imageProxy: ImageProxy,
@@ -165,97 +168,103 @@ class PoseLandmarkerHelper(
     }
 
     // ฟังก์ชันคำนวณมุม (รับค่า NormalizedLandmark ทั้งสามจุด)
-    private fun calculateAngle(
-        firstPoint: NormalizedLandmark, 
-        midPoint: NormalizedLandmark, 
-        lastPoint: NormalizedLandmark
-    ): Double {
-        val vectorA = floatArrayOf(
-            firstPoint.x() - midPoint.x(),
-            firstPoint.y() - midPoint.y(),
-            firstPoint.z() - midPoint.z()
-        )
-        
-        val vectorB = floatArrayOf(
-            lastPoint.x() - midPoint.x(),
-            lastPoint.y() - midPoint.y(),
-            lastPoint.z() - midPoint.z()
-        )
-        
-        val dotProduct = vectorA[0] * vectorB[0] + vectorA[1] * vectorB[1] + vectorA[2] * vectorB[2]
-        val magnitudeA = Math.sqrt((vectorA[0] * vectorA[0] + vectorA[1] * vectorA[1] + vectorA[2] * vectorA[2]).toDouble())
-        val magnitudeB = Math.sqrt((vectorB[0] * vectorB[0] + vectorB[1] * vectorB[1] + vectorB[2] * vectorB[2]).toDouble())
-        
-        if (magnitudeA == 0.0 || magnitudeB == 0.0) {
-            return 0.0
-        }
-        
-        val cosAngle = (dotProduct / (magnitudeA * magnitudeB)).toDouble()
-        val clampedCosAngle = cosAngle.coerceIn(-1.0, 1.0)
-        return Math.toDegrees(Math.acos(clampedCosAngle))
+    // ฟังก์ชันคำนวณมุม (รับค่า NormalizedLandmark ทั้งสามจุด)
+private fun calculateAngle(
+    firstPoint: NormalizedLandmark, 
+    midPoint: NormalizedLandmark, 
+    lastPoint: NormalizedLandmark
+): Double {
+    val vectorA = floatArrayOf(
+        firstPoint.x() - midPoint.x(),
+        firstPoint.y() - midPoint.y(),
+        firstPoint.z() - midPoint.z()
+    )
+    
+    val vectorB = floatArrayOf(
+        lastPoint.x() - midPoint.x(),
+        lastPoint.y() - midPoint.y(),
+        lastPoint.z() - midPoint.z()
+    )
+    
+    val dotProduct = vectorA[0] * vectorB[0] + vectorA[1] * vectorB[1] + vectorA[2] * vectorB[2]
+    val magnitudeA = Math.sqrt((vectorA[0] * vectorA[0] + vectorA[1] * vectorA[1] + vectorA[2] * vectorA[2]).toDouble())
+    val magnitudeB = Math.sqrt((vectorB[0] * vectorB[0] + vectorB[1] * vectorB[1] + vectorB[2] * vectorB[2]).toDouble())
+    
+    if (magnitudeA == 0.0 || magnitudeB == 0.0) {
+        return 0.0
     }
+    
+    val cosAngle = (dotProduct / (magnitudeA * magnitudeB)).toDouble()
+    val clampedCosAngle = cosAngle.coerceIn(-1.0, 1.0)
+    return Math.toDegrees(Math.acos(clampedCosAngle))
+}
 
-    // ฟังก์ชันสกัดมุมจาก landmarks (เก็บค่าใน Map)
-    fun extractJointAngles(landmarks: List<NormalizedLandmark>): Map<String, Double> {
-        val angles = mutableMapOf<String, Double>()
-        
-        // ดัชนี landmark ตาม MediaPipe
-        val NOSE = 0
-        val LEFT_SHOULDER = 11
-        val RIGHT_SHOULDER = 12
-        val LEFT_ELBOW = 13
-        val RIGHT_ELBOW = 14
-        val LEFT_WRIST = 15
-        val RIGHT_WRIST = 16
-        val LEFT_HIP = 23
-        val RIGHT_HIP = 24
-        val LEFT_KNEE = 25
-        val RIGHT_KNEE = 26
-        val LEFT_ANKLE = 27
-        val RIGHT_ANKLE = 28
-        
-        angles["left_shoulder_angle"] = calculateAngle(
-            landmarks[LEFT_HIP], 
-            landmarks[LEFT_SHOULDER], 
-            landmarks[LEFT_ELBOW]
-        )
-        angles["right_shoulder_angle"] = calculateAngle(
-            landmarks[RIGHT_HIP], 
-            landmarks[RIGHT_SHOULDER], 
-            landmarks[RIGHT_ELBOW]
-        )
-        angles["left_elbow_angle"] = calculateAngle(
-            landmarks[LEFT_SHOULDER], 
-            landmarks[LEFT_ELBOW], 
-            landmarks[LEFT_WRIST]
-        )
-        angles["right_elbow_angle"] = calculateAngle(
-            landmarks[RIGHT_SHOULDER], 
-            landmarks[RIGHT_ELBOW], 
-            landmarks[RIGHT_WRIST]
-        )
-        angles["left_hip_angle"] = calculateAngle(
-            landmarks[LEFT_SHOULDER], 
-            landmarks[LEFT_HIP], 
-            landmarks[LEFT_KNEE]
-        )
-        angles["right_hip_angle"] = calculateAngle(
-            landmarks[RIGHT_SHOULDER], 
-            landmarks[RIGHT_HIP], 
-            landmarks[RIGHT_KNEE]
-        )
-        angles["left_knee_angle"] = calculateAngle(
-            landmarks[LEFT_HIP], 
-            landmarks[LEFT_KNEE], 
-            landmarks[LEFT_ANKLE]
-        )
-        angles["right_knee_angle"] = calculateAngle(
-            landmarks[RIGHT_HIP], 
-            landmarks[RIGHT_KNEE], 
-            landmarks[RIGHT_ANKLE]
-        )
-        
-        return angles
+// ฟังก์ชันสกัดมุมจาก landmarks (เก็บค่าใน Map)
+fun extractJointAngles(landmarks: List<NormalizedLandmark>): Map<String, Double> {
+    val angles = mutableMapOf<String, Double>()
+    
+    // ดัชนี landmark ตาม MediaPipe
+    val NOSE = 0
+    val LEFT_SHOULDER = 11
+    val RIGHT_SHOULDER = 12
+    val LEFT_ELBOW = 13
+    val RIGHT_ELBOW = 14
+    val LEFT_WRIST = 15
+    val RIGHT_WRIST = 16
+    val LEFT_HIP = 23
+    val RIGHT_HIP = 24
+    val LEFT_KNEE = 25
+    val RIGHT_KNEE = 26
+    val LEFT_ANKLE = 27
+    val RIGHT_ANKLE = 28
+    
+    angles["left_shoulder_angle"] = calculateAngle(
+        landmarks[LEFT_HIP], 
+        landmarks[LEFT_SHOULDER], 
+        landmarks[LEFT_ELBOW]
+    )
+    angles["right_shoulder_angle"] = calculateAngle(
+        landmarks[RIGHT_HIP], 
+        landmarks[RIGHT_SHOULDER], 
+        landmarks[RIGHT_ELBOW]
+    )
+    angles["left_elbow_angle"] = calculateAngle(
+        landmarks[LEFT_SHOULDER], 
+        landmarks[LEFT_ELBOW], 
+        landmarks[LEFT_WRIST]
+    )
+    angles["right_elbow_angle"] = calculateAngle(
+        landmarks[RIGHT_SHOULDER], 
+        landmarks[RIGHT_ELBOW], 
+        landmarks[RIGHT_WRIST]
+    )
+    angles["left_hip_angle"] = calculateAngle(
+        landmarks[LEFT_SHOULDER], 
+        landmarks[LEFT_HIP], 
+        landmarks[LEFT_KNEE]
+    )
+    angles["right_hip_angle"] = calculateAngle(
+        landmarks[RIGHT_SHOULDER], 
+        landmarks[RIGHT_HIP], 
+        landmarks[RIGHT_KNEE]
+    )
+    angles["left_knee_angle"] = calculateAngle(
+        landmarks[LEFT_HIP], 
+        landmarks[LEFT_KNEE], 
+        landmarks[LEFT_ANKLE]
+    )
+    angles["right_knee_angle"] = calculateAngle(
+        landmarks[RIGHT_HIP], 
+        landmarks[RIGHT_KNEE], 
+        landmarks[RIGHT_ANKLE]
+    )
+    
+    return angles
+}
+    
+    // เมธอดสำหรับรับค่าความแตกต่างของมุม
+    fun getAngleDiscrepancies(): Map<String, Map<String, Double>> {
+        return angleDiscrepancies
     }
 
     // ส่ง landmarks (พร้อมมุม) ไปยัง Flask server
@@ -296,32 +305,62 @@ class PoseLandmarkerHelper(
             val mediaType = "application/json".toMediaType()
             val requestBody = RequestBody.create(mediaType, json.toString())
             val request = Request.Builder()
-                .url("http://192.168.1.38:5000/predict")
+                .url("http://192.168.8.108:5000/predict")
                 .post(requestBody)
                 .build()
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onResponse(call: Call, response: Response) {
                     try {
-                        val responseData = JSONObject(response.body?.string() ?: "{}")
+                        val responseBody = response.body?.string() ?: "{}"
+                        Log.d("PoseLandmarker", "Response from server: $responseBody")
+                        
+                        val responseData = JSONObject(responseBody)
                         val angleSimilarity = responseData.optDouble("angle_similarity", 0.0)
+                        val expectedPose = responseData.optString("expected_pose", "")
+                        
+                        // แยกวิเคราะห์ความแตกต่างของมุม
+                        val discrepancies = mutableMapOf<String, Map<String, Double>>()
+                        if (responseData.has("angle_discrepancies")) {
+                            val discrepanciesObj = responseData.getJSONObject("angle_discrepancies")
+                            Log.d("PoseLandmarker", "Discrepancies from server: ${discrepanciesObj}")
+                            
+                            val iterator = discrepanciesObj.keys()
+                            while (iterator.hasNext()) {
+                                val angleName = iterator.next()
+                                val discrepancyObj = discrepanciesObj.getJSONObject(angleName)
+                                discrepancies[angleName] = mapOf(
+                                    "user_angle" to discrepancyObj.getDouble("user_angle"),
+                                    "reference_angle" to discrepancyObj.getDouble("reference_angle"),
+                                    "difference" to discrepancyObj.getDouble("difference")
+                                )
+                            }
+                        }
+                        
+                        // บันทึกข้อมูลความแตกต่างของมุม
+                        angleDiscrepancies = discrepancies
+                        Log.d("PoseLandmarker", "Set angleDiscrepancies: $angleDiscrepancies")
                         
                         val prediction = mapOf(
                             "pose" to responseData.getString("predicted_pose"),
-                            "score" to angleSimilarity,
-                            "confidence" to responseData.optDouble("confidence", 0.0)
+                            "expected_pose" to expectedPose,
+                            "score" to responseData.optDouble("angle_similarity", 0.0), // ตรวจสอบให้แน่ใจว่าชื่อฟิลด์ตรงกัน
+                            "confidence" to responseData.optDouble("confidence", 0.0),
+                            "angle_discrepancies" to discrepancies
                         )
+                        
+                        Log.d("PoseLandmarker", "Sending to Flutter: predicted_pose=${prediction["pose"]}, expected_pose=${prediction["expected_pose"]}, score=${prediction["score"]}")
                         
                         mainThreadHandler.post {
                             methodChannel.invokeMethod("onPosePredicted", prediction)
                         }
                     } catch (e: Exception) {
-                        Log.e("PoseLandmarker", "Error parsing response: ${e.message}")
+                        Log.e("PoseLandmarker", "Error parsing response: ${e.message}", e)
                     } finally {
                         isProcessingHttp.set(false)
                     }
                 }
-
+                
                 override fun onFailure(call: Call, e: IOException) {
                     Log.e("PoseLandmarker", "Request failed: ${e.message}")
                     isProcessingHttp.set(false)

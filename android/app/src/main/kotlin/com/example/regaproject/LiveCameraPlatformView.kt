@@ -42,6 +42,15 @@ class LiveCameraPlatformView(
                         result.error("INVALID_ARGUMENT", "Invalid pose names", null)
                     }
                 }
+                "setAllowedPoses" -> {
+                    val poseNames = call.argument<List<String>>("poseNames")
+                    if (poseNames != null) {
+                        poseLandmarkerHelper.setAllowedPoses(poseNames)
+                        result.success(true)
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Invalid pose names", null)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
@@ -99,10 +108,17 @@ class LiveCameraPlatformView(
                         poseResult.landmarks().firstOrNull()?.let { landmarks ->
                             val angleMap = poseLandmarkerHelper.extractJointAngles(landmarks)
                             overlayView.setAngles(angleMap)
+
+                            // รับความแตกต่างของมุมจาก PoseLandmarkerHelper
+                            val discrepancies = poseLandmarkerHelper.getAngleDiscrepancies()
+                            Log.d("LiveCameraPlatformView", "Setting discrepancies to OverlayView: $discrepancies")
+                            
+                            // ส่งไปให้ OverlayView วาดวงกลมรอบมุมที่ไม่ถูกต้อง
+                            overlayView.setAngleDiscrepancies(discrepancies)
                         }
                         overlayView.bringToFront()
                     }
-                    // ส่ง landmarks ไปยัง Flask server (ถ้ามีการใช้งาน)
+                    // ส่ง landmarks ไปยัง Flask server
                     poseResult.landmarks().firstOrNull()?.let { landmarks ->
                         poseLandmarkerHelper.sendLandmarksToFlask(landmarks)
                     }

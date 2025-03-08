@@ -3,6 +3,7 @@ package com.example.regaproject
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.view.SurfaceView
 import android.view.SurfaceHolder
 import android.graphics.PorterDuff
@@ -13,6 +14,7 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
 
     private var currentResult: PoseLandmarkerResult? = null
     private var angleMap: Map<String, Double>? = null
+    private var angleDiscrepancies: Map<String, Map<String, Double>>? = null
 
     // ขนาดต้นฉบับของภาพที่ MediaPipe วิเคราะห์
     private var imageWidth = 1280
@@ -26,7 +28,7 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
     }
 
     private val linePaint = Paint().apply {
-        color = Color.RED
+        color = Color.BLUE
         strokeWidth = 8f
         style = Paint.Style.STROKE
         isAntiAlias = true
@@ -61,8 +63,17 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
         post { drawOverlay() }
     }
 
+    // ฟังก์ชันรับค่าความแตกต่างของมุม
+    fun setAngleDiscrepancies(discrepancies: Map<String, Map<String, Double>>?) {
+        Log.d("OverlayView", "setAngleDiscrepancies called with ${discrepancies?.size ?: 0} items")
+        angleDiscrepancies = discrepancies
+        post { drawOverlay() }
+    }
+
     private fun drawOverlay() {
         if (!holder.surface.isValid || currentResult == null) return
+        
+        Log.d("OverlayView", "drawOverlay called with discrepancies: ${angleDiscrepancies?.size}")
 
         val canvas = holder.lockCanvas()
         try {
@@ -114,13 +125,12 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
                 // วาดตัวเลขแสดงค่ามุม (Angle) ที่คำนวณได้
                 val angleTextPaint = Paint().apply {
                     color = Color.WHITE
-                    textSize = 100f
+                    textSize = 50f  // ลดขนาดตัวอักษรลงเพื่อให้ดูได้ชัดเจนขึ้น
                     style = Paint.Style.FILL
                     isAntiAlias = true
                 }
 
                 // mapping ชื่อมุมไปยัง index ของ landmark ที่ใช้แสดงค่า
-                // ตัวอย่าง: "left_elbow_angle" -> index 13, "right_elbow_angle" -> index 14 เป็นต้น
                 angleMap?.forEach { (angleName, angleValue) ->
                     val midIndex = when(angleName) {
                         "left_elbow_angle" -> 13
@@ -140,6 +150,62 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
                             val cx = offsetX + (lm.x() * imageWidth) * scale
                             val cy = offsetY + (lm.y() * imageHeight) * scale
                             canvas.drawText("${angleValue.toInt()}°", cx, cy - 10f, angleTextPaint)
+                        }
+                    }
+                }
+                
+                // วาดวงกลมรอบมุมที่ไม่ถูกต้อง
+                angleDiscrepancies?.let { discrepancies ->
+                    Log.d("OverlayView", "Drawing ${discrepancies.size} discrepancies")
+                    
+                    discrepancies.forEach { (angleName, discrepancy) ->
+                        Log.d("OverlayView", "Drawing discrepancy for $angleName")
+                        
+                        val midIndex = when(angleName) {
+                            "left_elbow_angle" -> 13
+                            "right_elbow_angle" -> 14
+                            "left_shoulder_angle" -> 11
+                            "right_shoulder_angle" -> 12
+                            "left_hip_angle" -> 23
+                            "right_hip_angle" -> 24
+                            "left_knee_angle" -> 25
+                            "right_knee_angle" -> 26
+                            else -> null
+                        }
+
+                        midIndex?.let { idx ->
+                            if (idx < landmarks.size) {
+                                val lm = landmarks[idx]
+                                val cx = offsetX + (lm.x() * imageWidth) * scale
+                                val cy = offsetY + (lm.y() * imageHeight) * scale
+                                
+                                // วาดวงกลมสีแดงเพื่อไฮไลต์มุมที่ไม่ถูกต้อง
+                                val highlightPaint = Paint().apply {
+                                    color = Color.RED
+                                    strokeWidth = 8f
+                                    style = Paint.Style.STROKE
+                                    isAntiAlias = true
+                                }
+                                
+                                // วาดวงกลมรอบข้อต่อ - ทำให้ใหญ่ขึ้นเพื่อให้เห็นชัดเจน
+                                canvas.drawCircle(cx, cy, 40f, highlightPaint)
+                                
+                                // วาดข้อความแก้ไข
+                                val correctionPaint = Paint().apply {
+                                    color = Color.RED
+                                    textSize = 60f
+                                    style = Paint.Style.FILL
+                                    isAntiAlias = true
+                                }
+                                
+                                val refAngle = discrepancy["reference_angle"]?.toInt() ?: 0
+                                val userAngle = discrepancy["user_angle"]?.toInt() ?: 0
+                                
+                                // แสดงทั้งค่าที่ควรจะเป็นและค่าความแตกต่าง
+                                canvas.drawText("→ ${refAngle}° (${(refAngle - userAngle).toInt()}°)", cx + 40f, cy, correctionPaint)
+                                
+                                Log.d("OverlayView", "Drew circle at $cx,$cy for $angleName")
+                            }
                         }
                     }
                 }
