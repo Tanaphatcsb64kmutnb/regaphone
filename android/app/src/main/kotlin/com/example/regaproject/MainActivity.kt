@@ -51,25 +51,27 @@ class MainActivity : FlutterActivity() {
         notificationMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NOTIFICATION_CHANNEL)
 
         // Register camera view factory
-        flutterEngine
-            .platformViewsController
-            .registry
-            .registerViewFactory(
-                "live_camera_view",
-                LiveCameraViewFactory(cameraMethodChannel)
-            )
+       flutterEngine
+    .platformViewsController
+    .registry
+    .registerViewFactory(
+        "live_camera_view",
+        LiveCameraViewFactory(this, cameraMethodChannel)
+    )
+
 
         // Setup camera method handler
         cameraMethodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
-                "switchCamera" -> {
-                    val isFrontCamera = call.argument<Boolean>("camera") ?: true
-                    result.success(null)
-                }
                 "playRestVideo" -> {
                     playRestVideo()
                     result.success(null)
                 }
+                "switchCamera" -> {
+                    val isFrontCamera = call.argument<Boolean>("camera") ?: true
+                    result.success(null)
+                }
+                
                  "setAllowedPoses" -> {
             val poseNames = call.argument<List<String>>("poseNames")
             if (poseNames != null) {
@@ -103,7 +105,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun playRestVideo() {
+    public fun playRestVideo() {
     val intent = Intent(this, VideoActivity::class.java)
     startActivityForResult(intent, VIDEO_REQUEST_CODE)
 }

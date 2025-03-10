@@ -305,7 +305,7 @@ fun extractJointAngles(landmarks: List<NormalizedLandmark>): Map<String, Double>
             val mediaType = "application/json".toMediaType()
             val requestBody = RequestBody.create(mediaType, json.toString())
             val request = Request.Builder()
-                .url("http://192.168.8.108:5000/predict")
+                .url("http://192.168.1.38:5000/predict")
                 .post(requestBody)
                 .build()
 

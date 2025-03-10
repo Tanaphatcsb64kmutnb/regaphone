@@ -17,6 +17,9 @@ import android.util.Size
 import android.view.ViewGroup
 import com.google.mediapipe.tasks.vision.core.RunningMode
 
+import android.app.Activity
+import android.content.ContextWrapper
+
 class LiveCameraPlatformView(
     private val context: Context,
     private val methodChannel: MethodChannel,
@@ -30,31 +33,49 @@ class LiveCameraPlatformView(
     private lateinit var poseLandmarkerHelper: PoseLandmarkerHelper
 
     // รับคำสั่งจาก MethodChannel (เช่น internalSetAllowedPoses)
-    private fun setupMethodChannelListener() {
-        methodChannel.setMethodCallHandler { call, result ->
-            when (call.method) {
-                "internalSetAllowedPoses" -> {
-                    val poseNames = call.argument<List<String>>("poseNames")
-                    if (poseNames != null) {
-                        poseLandmarkerHelper.setAllowedPoses(poseNames)
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_ARGUMENT", "Invalid pose names", null)
-                    }
+  private fun setupMethodChannelListener() {
+    methodChannel.setMethodCallHandler { call, result ->
+        when (call.method) {
+            "internalSetAllowedPoses" -> {
+                val poseNames = call.argument<List<String>>("poseNames")
+                if (poseNames != null) {
+                    poseLandmarkerHelper.setAllowedPoses(poseNames)
+                    result.success(true)
+                } else {
+                    result.error("INVALID_ARGUMENT", "Invalid pose names", null)
                 }
-                "setAllowedPoses" -> {
-                    val poseNames = call.argument<List<String>>("poseNames")
-                    if (poseNames != null) {
-                        poseLandmarkerHelper.setAllowedPoses(poseNames)
-                        result.success(true)
-                    } else {
-                        result.error("INVALID_ARGUMENT", "Invalid pose names", null)
-                    }
-                }
-                else -> result.notImplemented()
             }
+            "setAllowedPoses" -> {
+                val poseNames = call.argument<List<String>>("poseNames")
+                if (poseNames != null) {
+                    poseLandmarkerHelper.setAllowedPoses(poseNames)
+                    result.success(true)
+                } else {
+                    result.error("INVALID_ARGUMENT", "Invalid pose names", null)
+                }
+            }
+            "playRestVideo" -> {
+    val activity = getActivity(context)
+    if (activity is MainActivity) {
+        activity.playRestVideo()
+        result.success(null)
+    } else {
+        result.error("ERROR", "Unable to retrieve MainActivity", null)
+    }
+}
+
+            else -> result.notImplemented()
         }
     }
+}
+private fun getActivity(context: Context): Activity? {
+    var ctx = context
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
 
     init {
         container = FrameLayout(context)

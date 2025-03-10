@@ -1,0 +1,2 @@
+D:/regaphone - Copy (2)/Rega-Project/regaproject/android/app/.cxx/Debug/6e4h352n/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/regaphone - Copy (2)/Rega-Project/regaproject/android/app/.cxx/Debug/6e4h352n/armeabi-v7a/CMakeFiles/rebuild_cache.dir
