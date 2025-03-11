@@ -118,16 +118,15 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
       switch (call.method) {
         case 'videoCompleted':
           if (mounted) {
-            if (currentPoseIndex < yogaPoses.length) {
-              await savePoseScore();
-            }
-
             setState(() {
               isResting = false;
-              currentPoseIndex++;
             });
 
-            if (currentPoseIndex >= yogaPoses.length) {
+            if (currentPoseIndex < yogaPoses.length) {
+              // เริ่มต้นท่าโยคะหลังจากวิดีโอพักจบ
+              startPose();
+            } else {
+              // ถ้าทำครบทุกท่าแล้ว ให้ไปหน้าผลลัพธ์
               await saveProgramHistory();
               if (mounted && programHistoryId != null) {
                 Navigator.pushReplacement(
@@ -140,12 +139,6 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
                   ),
                 );
               }
-            } else {
-              Future.delayed(const Duration(milliseconds: 100), () {
-                if (mounted) {
-                  startPose();
-                }
-              });
             }
           }
           break;
@@ -239,15 +232,13 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
 
       setState(() {
         yogaPoses = fetchedPoses;
-
-        // สร้างการแมปปิ้งระหว่าง ID และชื่อท่า
         poseIdToName = {for (var pose in yogaPoses) pose["id"]: pose["name"]};
 
         if (yogaPoses.isNotEmpty) {
-          // ส่งรายชื่อท่าที่อนุญาตไปยัง native code
           _sendAllowedPoses();
 
-          startPose();
+          // แทนที่จะเรียก startPose() ทันที เราจะเริ่มด้วยการเล่นวิดีโอพักก่อน
+          showRestVideo(); // เริ่มต้นด้วยวิดีโอพักก่อน
         }
       });
     } catch (e) {
@@ -389,7 +380,6 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
 
   void startCountdown() {
     countdownTimer?.cancel();
-    // ใน startCountdown()
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         debugPrint(
@@ -404,11 +394,36 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
           if (remainingTime > 0) {
             remainingTime--;
           } else {
-            debugPrint("Time's up! Showing rest video");
+            debugPrint("Time's up for pose!");
             timer.cancel();
-            if (!isResting) {
-              showRestVideo();
-            }
+
+            // บันทึกคะแนนของท่าปัจจุบัน
+            savePoseScore().then((_) {
+              // เพิ่ม index ก่อนเล่นวิดีโอพัก
+              setState(() {
+                currentPoseIndex++;
+              });
+
+              // เล่นวิดีโอพักหรือจบ
+              if (currentPoseIndex < yogaPoses.length) {
+                showRestVideo(); // เล่นวิดีโอพักก่อนไปท่าถัดไป
+              } else {
+                // ถ้าทำครบทุกท่าแล้ว ให้ไปหน้าผลลัพธ์
+                saveProgramHistory().then((_) {
+                  if (mounted && programHistoryId != null) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PoseResultPage(
+                          programId: widget.programId!,
+                          programHistoryId: programHistoryId!,
+                        ),
+                      ),
+                    );
+                  }
+                });
+              }
+            });
           }
         });
       } else {
