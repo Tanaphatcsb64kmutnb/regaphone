@@ -52,7 +52,10 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> -->
 
             <activity android:name=".VideoActivity" android:theme="@style/Theme.AppCompat.NoActionBar" />
-
+            <activity
+    android:name=".SingleVideoActivity"
+    android:configChanges="orientation|keyboardHidden|screenSize"
+    android:theme="@style/Theme.AppCompat.NoActionBar" />
         <!-- Updated Firebase Service -->
         <service
             android:name=".MyFirebaseMessagingService"

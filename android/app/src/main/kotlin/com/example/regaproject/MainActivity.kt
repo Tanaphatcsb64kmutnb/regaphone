@@ -24,7 +24,8 @@ class MainActivity : FlutterActivity() {
     private lateinit var cameraMethodChannel: MethodChannel
     private lateinit var notificationMethodChannel: MethodChannel
     private var poseLandmarkerHelper: PoseLandmarkerHelper? = null
-
+    private val SINGLE_VIDEO_CHANNEL = "single_video_view"
+private lateinit var singleVideoMethodChannel: MethodChannel
 
     override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -50,6 +51,8 @@ class MainActivity : FlutterActivity() {
         // Setup notification channel
         notificationMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NOTIFICATION_CHANNEL)
 
+        singleVideoMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SINGLE_VIDEO_CHANNEL)
+    
         // Register camera view factory
        flutterEngine
     .platformViewsController
@@ -104,6 +107,18 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+    singleVideoMethodChannel.setMethodCallHandler { call, result ->
+    when (call.method) {
+        "playSingleVideo" -> {
+            val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
+            playSingleVideo(videoFileName)
+            result.success(null)
+        }
+        else -> result.notImplemented()
+    }
+}
+
     }
 
     // MainActivity.kt
@@ -111,6 +126,14 @@ fun playRestVideo(videoFileName: String = "rest_video") {
     val intent = Intent(this, VideoActivity::class.java)
     intent.putExtra("videoFileName", videoFileName)
     startActivityForResult(intent, VIDEO_REQUEST_CODE)
+}
+
+
+// เพิ่มฟังก์ชัน playSingleVideo
+fun playSingleVideo(videoFileName: String) {
+    val intent = Intent(this, SingleVideoActivity::class.java)
+    intent.putExtra("videoFileName", videoFileName)
+    startActivity(intent) // ไม่ต้องการผลลัพธ์จึงใช้ startActivity แทน startActivityForResult
 }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
