@@ -54,10 +54,11 @@ class LiveCameraPlatformView(
                     result.error("INVALID_ARGUMENT", "Invalid pose names", null)
                 }
             }
-            "playRestVideo" -> {
+           "playRestVideo" -> {
+    val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
     val activity = getActivity(context)
     if (activity is MainActivity) {
-        activity.playRestVideo()
+        activity.playRestVideo(videoFileName) // เพิ่มการส่งพารามิเตอร์
         result.success(null)
     } else {
         result.error("ERROR", "Unable to retrieve MainActivity", null)

@@ -1,4 +1,3 @@
-//VideoActivity.kt
 package com.example.regaproject
 
 import android.net.Uri
@@ -9,6 +8,7 @@ import android.app.Activity
 import android.widget.MediaController
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import android.util.Log
 
 class VideoActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,20 +44,53 @@ class VideoActivity : Activity() {
         layout.addView(videoView)
         setContentView(layout)
 
-        // Set video properties
-        val videoUri = Uri.parse("android.resource://${packageName}/raw/rest_video")
-        videoView.setVideoURI(videoUri)
+        // รับชื่อไฟล์วิดีโอจาก intent
+        val videoFileName = intent.getStringExtra("videoFileName") ?: "rest_video"
+        
+        // ตัดนามสกุลไฟล์ออกถ้ามี
+        val bareFileName = if (videoFileName.contains(".")) {
+            videoFileName.substring(0, videoFileName.lastIndexOf("."))
+        } else {
+            videoFileName
+        }
+        
+        Log.d("VideoActivity", "Attempting to play video: $bareFileName")
+        
+        // ดึง resource ID จากชื่อไฟล์
+        val resourceId = resources.getIdentifier(bareFileName, "raw", packageName)
+        
+        if (resourceId != 0) {
+            // พบไฟล์ในโฟลเดอร์ raw
+            Log.d("VideoActivity", "Found video resource with id: $resourceId")
+            val videoUri = Uri.parse("android.resource://${packageName}/raw/${bareFileName}")
+            videoView.setVideoURI(videoUri)
+        } else {
+            // ไม่พบไฟล์ ใช้ rest_video เป็นค่าเริ่มต้น
+            Log.e("VideoActivity", "Video resource not found: $bareFileName, using default")
+            val defaultUri = Uri.parse("android.resource://${packageName}/raw/rest_video")
+            videoView.setVideoURI(defaultUri)
+        }
 
         // Set video scaling
         videoView.setOnPreparedListener { mediaPlayer ->
             mediaPlayer.setVideoScalingMode(android.media.MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
             mediaPlayer.start()
+            Log.d("VideoActivity", "Video playback started")
         }
 
         // Handle video completion
         videoView.setOnCompletionListener {
+            Log.d("VideoActivity", "Video playback completed")
             setResult(Activity.RESULT_OK)
             finish()
+        }
+        
+        // Handle errors
+        videoView.setOnErrorListener { mediaPlayer, what, extra ->
+            Log.e("VideoActivity", "Error playing video: what=$what, extra=$extra")
+            setResult(Activity.RESULT_OK) // Return OK anyway to continue the flow
+            finish()
+            true
         }
     }
 

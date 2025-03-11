@@ -212,6 +212,7 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
     });
   }
 
+  // ปรับปรุงฟังก์ชัน fetchYogaPoses()
   Future<void> fetchYogaPoses() async {
     try {
       final querySnapshot = await FirebaseFirestore.instance
@@ -227,22 +228,52 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
           "name": doc['Name'],
           "timeup": doc['Timeup'],
           "id": doc.id,
+          "video": doc['Video'] ?? "rest_video.mp4", // เพิ่มฟิลด์ video
         };
       }).toList();
 
       setState(() {
         yogaPoses = fetchedPoses;
+
+        // สร้างการแมปปิ้งระหว่าง ID และชื่อท่า
         poseIdToName = {for (var pose in yogaPoses) pose["id"]: pose["name"]};
 
         if (yogaPoses.isNotEmpty) {
+          // ส่งรายชื่อท่าที่อนุญาตไปยัง native code
           _sendAllowedPoses();
 
-          // แทนที่จะเรียก startPose() ทันที เราจะเริ่มด้วยการเล่นวิดีโอพักก่อน
-          showRestVideo(); // เริ่มต้นด้วยวิดีโอพักก่อน
+          // เริ่มต้นด้วยวิดีโอสอนท่าแรก
+          if (currentPoseIndex < yogaPoses.length) {
+            showInstructionVideo(yogaPoses[currentPoseIndex]['video']);
+          }
         }
       });
     } catch (e) {
       debugPrint("Error fetching yoga poses: $e");
+    }
+  }
+
+  // เพิ่มฟังก์ชันใหม่สำหรับเล่นวิดีโอสอน
+  Future<void> showInstructionVideo(String videoFileName) async {
+    setState(() {
+      isResting = true;
+    });
+
+    countdownTimer?.cancel();
+
+    try {
+      await platform
+          .invokeMethod('playRestVideo', {"videoFileName": videoFileName});
+    } catch (e) {
+      debugPrint("Failed to play instruction video: $e");
+      // ถ้าเกิด error ให้จำลองการจบวิดีโอเพื่อเริ่มท่า
+      if (mounted) {
+        debugPrint("Video error - simulating video completion");
+        setState(() {
+          isResting = false;
+        });
+        startPose();
+      }
     }
   }
 
@@ -394,19 +425,18 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
           if (remainingTime > 0) {
             remainingTime--;
           } else {
-            debugPrint("Time's up for pose!");
+            debugPrint("Time's up! Moving to next pose");
             timer.cancel();
 
             // บันทึกคะแนนของท่าปัจจุบัน
             savePoseScore().then((_) {
-              // เพิ่ม index ก่อนเล่นวิดีโอพัก
               setState(() {
                 currentPoseIndex++;
               });
 
-              // เล่นวิดีโอพักหรือจบ
               if (currentPoseIndex < yogaPoses.length) {
-                showRestVideo(); // เล่นวิดีโอพักก่อนไปท่าถัดไป
+                // เล่นวิดีโอสอนของท่าถัดไป
+                showInstructionVideo(yogaPoses[currentPoseIndex]['video']);
               } else {
                 // ถ้าทำครบทุกท่าแล้ว ให้ไปหน้าผลลัพธ์
                 saveProgramHistory().then((_) {

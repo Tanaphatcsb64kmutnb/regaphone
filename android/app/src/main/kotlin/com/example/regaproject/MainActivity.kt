@@ -64,9 +64,10 @@ class MainActivity : FlutterActivity() {
         cameraMethodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "playRestVideo" -> {
-                    playRestVideo()
-                    result.success(null)
-                }
+            val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
+            playRestVideo(videoFileName)
+            result.success(null)
+        }
                 "switchCamera" -> {
                     val isFrontCamera = call.argument<Boolean>("camera") ?: true
                     result.success(null)
@@ -105,8 +106,10 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    public fun playRestVideo() {
+    // MainActivity.kt
+fun playRestVideo(videoFileName: String = "rest_video") {
     val intent = Intent(this, VideoActivity::class.java)
+    intent.putExtra("videoFileName", videoFileName)
     startActivityForResult(intent, VIDEO_REQUEST_CODE)
 }
 
