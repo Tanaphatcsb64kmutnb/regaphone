@@ -96,74 +96,13 @@ flutter:
     - assets/pose_landmarker_heavy.task
     - assets/pose_landmarker_full.task
     - assets/pose_landmarker_lite.task
-    - assets/img/officesyndrome.jpg
-    - assets/img/butterfly.png
-    - assets/img/Child.png
-    - assets/img/Savasana.png
-    - assets/img/Paschimottanasana.png
-    - assets/img/Sukhasana.png
+    - assets/img/officesyndrome.png
     - assets/img/bloodpressure.png
     - assets/img/heartdisease.png
     - assets/img/Armpain.png
     - assets/img/Backpain.png
     - assets/img/LegPain.png
-    - assets/img/NeckPain.png
-    - assets/img/moutainpose.png
-    - assets/img/Windrelievingpose.png
-    - assets/img/BirdDog.png
-    - assets/img/halfmoonpose.png
-    - assets/img/SavasanawithFeetAgainstWall.png
-    - assets/img/TabletoptoToePose.png
-    - assets/img/UpwardSalute.png
-    - assets/img/SpinalTwist.png
-    - assets/img/ThreadtheNeedlePose.png
-    - assets/img/SideNeckStretch.png
-    - assets/img/StandingSpinalTwistPose.png
-    - assets/img/bowpose.png
-    - assets/img/plowpose.png
-    - assets/img/LegsUptheWallPose.png
-    - assets/img/halfforwardbend.png
-    - assets/img/sagemarichi.png
-    - assets/img/thebigtoepose.png
-    - assets/img/headtokneeforwardbend.png
-    - assets/img/warriorii.png
-    - assets/img/easypose.png
-    - assets/img/trianglepose.png
-    - assets/img/dancerpose.png
-    - assets/img/heropose.png
-    - assets/img/extendedsideanglepose.png
-    - assets/img/standingforwardbendpose.png
-    - assets/img/fingersupanddownstretch.png
-    - assets/img/cowfacepose.png
-    - assets/img/StandingFigureFourPose.png
-    - assets/img/warriori.png
-    - assets/img/chairpose.png
-    - assets/img/ExtendedTrianglepose.png
-    - assets/img/RevolvedSideAnglePose.png
-    - assets/img/chairtwistpose.png
-    - assets/img/RevolvedTrianglePose.png
-    - assets/img/HalfLordoftheFishespose.png
-    - assets/img/TableTopwithAlternatingKneetoElbow.png
-    - assets/img/halfsplitstretch.png
-    - assets/img/standingbentovercalfstretch.png
-    - assets/img/lungingcalfstretch.png
-    - assets/img/seatedforwardfoldpose.png
-    - assets/img/treepose.png
-    - assets/img/StandingQuadStretchPose.png
-    - assets/img/pyramidpose.png
-    - assets/img/goddesspose.png
-    - assets/img/camelpose.png
-    - assets/img/Lowlungpose.png
-    - assets/img/frogpose.png
-    - assets/img/garlandpose.png
-    - assets/img/butterflypose.png
-    - assets/img/moutainpose.png
-    - assets/img/reversewarrior.png
-    - assets/img/WideLeggedForwardpose.png
-    - assets/img/DownwardFacingdogpose.png
-    - assets/img/cactuspose.png
-    - assets/img/eaglepose.png
-    - assets/img/catcow.png
+    - assets/img/NeckPain.png 
     - assets/img/kneepain.png
     - assets/img/headache.png
     - assets/img/allergylung.png
@@ -178,8 +117,58 @@ flutter:
     - assets/img/hippain.png
     - assets/img/shouderpain.png
     - assets/img/Beforeworkout.png
-    - assets/img/assistedsidebend.png
-
+    - assets/img/assistedsidebendpose.jpg
+    - assets/img/bigtoepose.jpg
+    - assets/img/birddogpose.jpg
+    - assets/img/boatpose.jpg
+    - assets/img/bowpose.jpg
+    - assets/img/bridgepose.jpg
+    - assets/img/butterflypose.jpg
+    - assets/img/cactuspose.jpg
+    - assets/img/camelpose.jpg
+    - assets/img/catcow.jpg
+    - assets/img/chairtwistpose.jpg
+    - assets/img/cobrapose.jpg
+    - assets/img/corpsepose.jpg
+    - assets/img/crescentpose.jpg
+    - assets/img/dancerpose.jpg
+    - assets/img/easypose.jpg
+    - assets/img/extendedsideanglepose.jpg
+    - assets/img/gatepose.jpg
+    - assets/img/goddesspose.jpg
+    - assets/img/halffwbend.jpg
+    - assets/img/HalfLordoftheFishespose.jpg
+    - assets/img/halfmoonpose.jpg
+    - assets/img/halfsplitpose.jpg
+    - assets/img/headtokneefwbend.jpg
+    - assets/img/heropose.jpg
+    - assets/img/lizardpose.jpg
+    - assets/img/lowlungepose.jpg
+    - assets/img/lungingcalfstrecthpose.jpg
+    - assets/img/moutainpose.jpg
+    - assets/img/plowpose.jpg
+    - assets/img/pyramidpose.jpg
+    - assets/img/reversewarriorpose.jpg
+    - assets/img/revolvedheadtokneepose.jpg
+    - assets/img/revolvedsideanglepose.jpg
+    - assets/img/revolvedtrianglepose.jpg
+    - assets/img/salutationsealpose.jpg
+    - assets/img/sideneckstresspose.jpg
+    - assets/img/sideplankpose.jpg
+    - assets/img/sidereclinlingpose.jpg
+    - assets/img/standingbentovercalfpose.jpg
+    - assets/img/standingbowpose.jpg
+    - assets/img/standingfigurepose.jpg
+    - assets/img/standingquadpose.jpg
+    - assets/img/thechairpose.jpg
+    - assets/img/treepose.jpg
+    - assets/img/trianglepose.jpg
+    - assets/img/upwardsalute.jpg
+    - assets/img/upwardsalutsidepose.jpg
+    - assets/img/warriori.jpg
+    - assets/img/warriorii.jpg
+    - assets/img/warrioriii.jpg
+    - assets/img/StandingSpinalTwistPose.jpg
 
 
 

@@ -48,8 +48,8 @@ class PoseLandmarkerHelper(
     private val PROCESS_INTERVAL = 1000L
     private val isProcessingHttp = AtomicBoolean(false)
     private val client = OkHttpClient.Builder()
-        .connectTimeout(1, TimeUnit.SECONDS)
-        .readTimeout(1, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
         .build()
         
     // ประกาศตัวแปรเพื่อเก็บข้อมูลความแตกต่างของมุม
@@ -305,7 +305,9 @@ fun extractJointAngles(landmarks: List<NormalizedLandmark>): Map<String, Double>
             val mediaType = "application/json".toMediaType()
             val requestBody = RequestBody.create(mediaType, json.toString())
             val request = Request.Builder()
-                .url("http://192.168.117.17:5000/predict")
+                //.url("http://192.168.117.17:5000/predict")
+                .url("https://web-production-768f5.up.railway.app/predict")
+                
                 .post(requestBody)
                 .build()
 
