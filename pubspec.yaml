@@ -76,6 +76,11 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+flutter_launcher_icons:
+      android: true
+      ios: true
+      image_path: "assets/icon/logorega.png"
+      
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -204,8 +209,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-flutter_launcher_icons:
-      android: true
-      ios: true
-      image_path: "assets/icon/logorega.png"
-      

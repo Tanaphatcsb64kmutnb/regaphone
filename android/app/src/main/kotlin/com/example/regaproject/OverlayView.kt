@@ -15,6 +15,7 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
     private var currentResult: PoseLandmarkerResult? = null
     private var angleMap: Map<String, Double>? = null
     private var angleDiscrepancies: Map<String, Map<String, Double>>? = null
+    private var isPoseCorrect: Boolean? = null // null = ยังไม่ทราบ, true = ถูกต้อง, false = ไม่ถูกต้อง
 
     // ขนาดต้นฉบับของภาพที่ MediaPipe วิเคราะห์
     private var imageWidth = 1280
@@ -29,7 +30,7 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
 
     private val linePaint = Paint().apply {
         color = Color.BLUE
-        strokeWidth = 8f
+        strokeWidth = 10f
         style = Paint.Style.STROKE
         isAntiAlias = true
         strokeCap = Paint.Cap.ROUND
@@ -70,6 +71,13 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
         post { drawOverlay() }
     }
 
+    // 2. เพิ่มฟังก์ชันใหม่สำหรับตั้งค่า isPoseCorrect
+fun setPoseCorrectness(isCorrect: Boolean) {
+    isPoseCorrect = isCorrect
+    post { drawOverlay() }
+}
+
+
     private fun drawOverlay() {
         if (!holder.surface.isValid || currentResult == null) return
         
@@ -80,45 +88,44 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
             // เคลียร์ canvas
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
-            currentResult?.landmarks()?.firstOrNull()?.let { landmarks ->
-                // คำนวณ scale และ offset สำหรับการวาดให้พอดีกับหน้าจอ
-                val overlayW = width.toFloat()
-                val overlayH = height.toFloat()
-                val cameraAspect = imageWidth.toFloat() / imageHeight.toFloat()
-                val overlayAspect = overlayW / overlayH
-                var scale = 1f
-                var offsetX = 0f
-                var offsetY = 0f
+            // กำหนดสีของเส้นตามความถูกต้องของท่า
+        when (isPoseCorrect) {
+            true -> linePaint.color = Color.GREEN // สีเขียวเมื่อท่าถูกต้อง
+            false -> linePaint.color = Color.RED // สีแดงเมื่อท่าไม่ถูกต้อง
+            null -> linePaint.color = Color.BLUE // สีน้ำเงิน (ค่าเริ่มต้น) เมื่อยังไม่ทราบสถานะ
+        }
 
-                if (overlayAspect > cameraAspect) {
-                    scale = overlayW / imageWidth
-                    val scaledH = imageHeight * scale
-                    offsetY = (overlayH - scaledH) / 2f
-                } else {
-                    scale = overlayH / imageHeight
-                    val scaledW = imageWidth * scale
-                    offsetX = (overlayW - scaledW) / 2f
+        currentResult?.landmarks()?.firstOrNull()?.let { landmarks ->
+            // ส่วนวาด landmarks และเส้นเชื่อมยังคงเดิม...
+            // ใช้วิธีการคำนวณที่ง่ายและแม่นยำขึ้น
+            val viewWidth = width.toFloat()
+            val viewHeight = height.toFloat()
+            
+            // ตรวจสอบว่า view มีการ flip หรือไม่ (กล้องหน้า)
+            val isFlipped = scaleX < 0
+            Log.d("OverlayView", "View is flipped: $isFlipped, scaleX: $scaleX")
+            
+            // วาดเส้นเชื่อมระหว่าง landmarks
+            PoseLandmarker.POSE_LANDMARKS.forEach { connection ->
+                if (connection != null) {
+                    val start = landmarks[connection.start()]
+                    val end = landmarks[connection.end()]
+
+                    // ถ้า view ถูก flip ให้กลับค่า x เพื่อให้การวาดถูกต้อง
+                    val startX = if (isFlipped) (1 - start.x()) * viewWidth else start.x() * viewWidth
+                    val startY = start.y() * viewHeight
+                    val endX = if (isFlipped) (1 - end.x()) * viewWidth else end.x() * viewWidth
+                    val endY = end.y() * viewHeight
+
+                    canvas.drawLine(startX, startY, endX, endY, linePaint)
                 }
-
-                // วาดเส้นเชื่อมระหว่าง landmarks
-                PoseLandmarker.POSE_LANDMARKS.forEach { connection ->
-                    if (connection != null) {
-                        val start = landmarks[connection.start()]
-                        val end = landmarks[connection.end()]
-
-                        val startX = offsetX + (start.x() * imageWidth) * scale
-                        val startY = offsetY + (start.y() * imageHeight) * scale
-                        val endX = offsetX + (end.x() * imageWidth) * scale
-                        val endY = offsetY + (end.y() * imageHeight) * scale
-
-                        canvas.drawLine(startX, startY, endX, endY, linePaint)
-                    }
-                }
+            }
 
                 // วาดจุด landmarks
                 landmarks.forEach { lm ->
-                    val cx = offsetX + (lm.x() * imageWidth) * scale
-                    val cy = offsetY + (lm.y() * imageHeight) * scale
+                    // ถ้า view ถูก flip ให้กลับค่า x เพื่อให้การวาดถูกต้อง
+                    val cx = if (isFlipped) (1 - lm.x()) * viewWidth else lm.x() * viewWidth
+                    val cy = lm.y() * viewHeight
                     canvas.drawCircle(cx, cy, 10f, pointPaint)
                 }
 
@@ -147,8 +154,9 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
                     midIndex?.let { idx ->
                         if (idx < landmarks.size) {
                             val lm = landmarks[idx]
-                            val cx = offsetX + (lm.x() * imageWidth) * scale
-                            val cy = offsetY + (lm.y() * imageHeight) * scale
+                            // ถ้า view ถูก flip ให้กลับค่า x เพื่อให้การวาดถูกต้อง
+                            val cx = if (isFlipped) (1 - lm.x()) * viewWidth else lm.x() * viewWidth
+                            val cy = lm.y() * viewHeight
                             canvas.drawText("${angleValue.toInt()}°", cx, cy - 10f, angleTextPaint)
                         }
                     }
@@ -159,52 +167,59 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : SurfaceView(context
                     Log.d("OverlayView", "Drawing ${discrepancies.size} discrepancies")
                     
                     discrepancies.forEach { (angleName, discrepancy) ->
-                        Log.d("OverlayView", "Drawing discrepancy for $angleName")
+                        // ตรวจสอบความแตกต่างของมุม
+                        val refAngle = discrepancy["reference_angle"] ?: 0.0
+                        val userAngle = discrepancy["user_angle"] ?: 0.0
+                        val difference = Math.abs(refAngle - userAngle)
                         
-                        val midIndex = when(angleName) {
-                            "left_elbow_angle" -> 13
-                            "right_elbow_angle" -> 14
-                            "left_shoulder_angle" -> 11
-                            "right_shoulder_angle" -> 12
-                            "left_hip_angle" -> 23
-                            "right_hip_angle" -> 24
-                            "left_knee_angle" -> 25
-                            "right_knee_angle" -> 26
-                            else -> null
-                        }
+                        // แสดงเฉพาะความแตกต่างที่มากกว่า 30 องศา
+                        if (difference > 30.0) {
+                            Log.d("OverlayView", "Drawing discrepancy for $angleName (diff: $difference)")
+                            
+                            val midIndex = when(angleName) {
+                                "left_elbow_angle" -> 13
+                                "right_elbow_angle" -> 14
+                                "left_shoulder_angle" -> 11
+                                "right_shoulder_angle" -> 12
+                                "left_hip_angle" -> 23
+                                "right_hip_angle" -> 24
+                                "left_knee_angle" -> 25
+                                "right_knee_angle" -> 26
+                                else -> null
+                            }
 
-                        midIndex?.let { idx ->
-                            if (idx < landmarks.size) {
-                                val lm = landmarks[idx]
-                                val cx = offsetX + (lm.x() * imageWidth) * scale
-                                val cy = offsetY + (lm.y() * imageHeight) * scale
-                                
-                                // วาดวงกลมสีแดงเพื่อไฮไลต์มุมที่ไม่ถูกต้อง
-                                val highlightPaint = Paint().apply {
-                                    color = Color.RED
-                                    strokeWidth = 8f
-                                    style = Paint.Style.STROKE
-                                    isAntiAlias = true
+                            midIndex?.let { idx ->
+                                if (idx < landmarks.size) {
+                                    val lm = landmarks[idx]
+                                    // ถ้า view ถูก flip ให้กลับค่า x เพื่อให้การวาดถูกต้อง
+                                    val cx = if (isFlipped) (1 - lm.x()) * viewWidth else lm.x() * viewWidth
+                                    val cy = lm.y() * viewHeight
+                                    
+                                    // วาดวงกลมสีแดงเพื่อไฮไลต์มุมที่ไม่ถูกต้อง
+                                    val highlightPaint = Paint().apply {
+                                        color = Color.RED
+                                        strokeWidth = 8f
+                                        style = Paint.Style.STROKE
+                                        isAntiAlias = true
+                                    }
+                                    
+                                    // วาดวงกลมรอบข้อต่อ - ทำให้ใหญ่ขึ้นเพื่อให้เห็นชัดเจน
+                                    canvas.drawCircle(cx, cy, 40f, highlightPaint)
+                                    
+                                    // วาดข้อความแก้ไข
+                                    val correctionPaint = Paint().apply {
+                                        color = Color.RED
+                                        textSize = 60f
+                                        style = Paint.Style.FILL
+                                        isAntiAlias = true
+                                    }
+                                    
+                                    // ปรับตำแหน่งข้อความตามการ flip
+                                    val textX = if (isFlipped) cx - 40f - (refAngle.toInt().toString().length * 40f) else cx + 40f
+                                    canvas.drawText("→ ${refAngle.toInt()}° (${(refAngle - userAngle).toInt()}°)", textX, cy, correctionPaint)
+                                    
+                                    Log.d("OverlayView", "Drew circle at $cx,$cy for $angleName")
                                 }
-                                
-                                // วาดวงกลมรอบข้อต่อ - ทำให้ใหญ่ขึ้นเพื่อให้เห็นชัดเจน
-                                canvas.drawCircle(cx, cy, 40f, highlightPaint)
-                                
-                                // วาดข้อความแก้ไข
-                                val correctionPaint = Paint().apply {
-                                    color = Color.RED
-                                    textSize = 60f
-                                    style = Paint.Style.FILL
-                                    isAntiAlias = true
-                                }
-                                
-                                val refAngle = discrepancy["reference_angle"]?.toInt() ?: 0
-                                val userAngle = discrepancy["user_angle"]?.toInt() ?: 0
-                                
-                                // แสดงทั้งค่าที่ควรจะเป็นและค่าความแตกต่าง
-                                canvas.drawText("→ ${refAngle}° (${(refAngle - userAngle).toInt()}°)", cx + 40f, cy, correctionPaint)
-                                
-                                Log.d("OverlayView", "Drew circle at $cx,$cy for $angleName")
                             }
                         }
                     }

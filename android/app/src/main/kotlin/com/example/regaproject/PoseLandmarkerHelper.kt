@@ -42,6 +42,7 @@ class PoseLandmarkerHelper(
     private val isProcessing = AtomicBoolean(false)
     // เก็บรายชื่อท่าที่อนุญาต
     private var allowedPoseNames: List<String> = listOf()
+    
 
     // สำหรับส่ง landmarks ไป Server (ถ้าต้องการ)
     private var lastProcessedTime = 0L
@@ -107,60 +108,62 @@ class PoseLandmarkerHelper(
     /**
      * เรียกจาก ImageAnalysis เพื่อตรวจจับ Pose แบบ Live Stream
      */
-    fun detectLiveStream(imageProxy: ImageProxy, isFrontCamera: Boolean) {
-        if (isProcessing.get() || poseLandmarker == null) {
+   fun detectLiveStream(imageProxy: ImageProxy, isFrontCamera: Boolean) {
+    if (isProcessing.get() || poseLandmarker == null) {
+        imageProxy.close()
+        return
+    }
+
+    backgroundExecutor.execute {
+        try {
+            isProcessing.set(true)
+
+            // แปลง ImageProxy -> Bitmap
+            val bitmap = convertImageProxyToBitmap(imageProxy, isFrontCamera)
+
+            // ส่งภาพเข้า MediaPipe โดยไม่ย่อขนาด เพื่อให้ได้ความแม่นยำสูงสุด
+            val mpImage = BitmapImageBuilder(bitmap).build()
+            poseLandmarker?.detectAsync(mpImage, System.currentTimeMillis())
+
+            bitmap.recycle()
+        } catch (e: Exception) {
+            Log.e("PoseLandmarkerHelper", "Detection error", e)
+            poseLandmarkerHelperListener?.onError("Detection failed: ${e.message}")
+        } finally {
+            isProcessing.set(false)
             imageProxy.close()
-            return
-        }
-
-        backgroundExecutor.execute {
-            try {
-                isProcessing.set(true)
-
-                // แปลง ImageProxy -> Bitmap
-                val bitmap = convertImageProxyToBitmap(imageProxy, isFrontCamera)
-
-                // ย่อขนาดก่อนส่งเข้า MediaPipe (ปรับได้ตามต้องการ)
-                val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 640, 480, true)
-                bitmap.recycle()
-
-                val mpImage = BitmapImageBuilder(resizedBitmap).build()
-                poseLandmarker?.detectAsync(mpImage, System.currentTimeMillis())
-
-                resizedBitmap.recycle()
-            } catch (e: Exception) {
-                Log.e("PoseLandmarkerHelper", "Detection error", e)
-                poseLandmarkerHelperListener?.onError("Detection failed: ${e.message}")
-            } finally {
-                isProcessing.set(false)
-                imageProxy.close()
-            }
         }
     }
+}
 
     /**
      * แปลง ImageProxy เป็น Bitmap โดยไม่ทำการ flip (ให้ MediaPipe รับภาพ "ปกติ")
      */
-    private fun convertImageProxyToBitmap(
-        imageProxy: ImageProxy,
-        isFrontCamera: Boolean
-    ): Bitmap {
-        val bitmap = Bitmap.createBitmap(
-            imageProxy.width,
-            imageProxy.height,
-            Bitmap.Config.ARGB_8888
-        )
+   private fun convertImageProxyToBitmap(
+    imageProxy: ImageProxy,
+    isFrontCamera: Boolean
+): Bitmap {
+    val bitmap = Bitmap.createBitmap(
+        imageProxy.width,
+        imageProxy.height,
+        Bitmap.Config.ARGB_8888
+    )
 
-        val yuvToRgbConverter = YuvToRgbConverter(context)
-        yuvToRgbConverter.yuvToRgb(imageProxy, bitmap)
+    val yuvToRgbConverter = YuvToRgbConverter(context)
+    yuvToRgbConverter.yuvToRgb(imageProxy, bitmap)
 
-        val matrix = Matrix().apply {
-            postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+    val matrix = Matrix().apply {
+        // หมุนภาพตามการหมุนของกล้อง
+        postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
+        
+        // ถ้าเป็นกล้องหน้า ให้กลับภาพในแกน X
+        if (isFrontCamera) {
+            postScale(-1f, 1f)
         }
-
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+}
     // ฟังก์ชันสำหรับตั้งค่ารายชื่อท่าที่อนุญาต
     fun setAllowedPoses(poseNames: List<String>) {
         allowedPoseNames = poseNames

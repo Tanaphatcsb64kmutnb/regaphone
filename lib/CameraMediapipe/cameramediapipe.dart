@@ -143,6 +143,7 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
           }
           break;
 
+        // 2. แก้ไขส่วนของ case 'onPosePredicted': ในฟังก์ชัน _setupMethodChannel
         case 'onPosePredicted':
           final Map<String, dynamic> prediction =
               Map<String, dynamic>.from(call.arguments);
@@ -168,7 +169,11 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
                 // ตรวจสอบว่าท่าที่ทำนายได้ตรงกับท่าที่ล็อกไว้หรือไม่
                 final expectedPoseName = yogaPoses[currentPoseIndex]['name'];
 
-                if (currentPredictedPose == expectedPoseName) {
+                // เพิ่ม: ส่งสถานะความถูกต้องของท่าไปยัง native code
+                bool isPoseCorrect = currentPredictedPose == expectedPoseName;
+                setPoseCorrectness(isPoseCorrect);
+
+                if (isPoseCorrect) {
                   // คำนวณคะแนนเมื่อทำท่าถูกต้อง
                   double addedScore = angleScore * scoreMultiplier;
 
@@ -287,6 +292,16 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
           .invokeMethod('setAllowedPoses', {'poseNames': allowedPoseNames});
     } catch (e) {
       debugPrint("Error sending allowed poses: $e");
+    }
+  }
+
+  // 1. เพิ่มฟังก์ชัน setPoseCorrectness ในคลาส _CameraMediapipeScreenState
+  Future<void> setPoseCorrectness(bool isCorrect) async {
+    try {
+      await platform
+          .invokeMethod('setPoseCorrectness', {'isCorrect': isCorrect});
+    } catch (e) {
+      debugPrint("Error setting pose correctness: $e");
     }
   }
 
@@ -698,6 +713,9 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
             ),
 
           if (widget.programId != null && yogaPoses.isNotEmpty)
+            // แก้ไขส่วนของการแสดงชื่อท่าโยคะในไฟล์ cameramediapipe.dart
+// ค้นหาส่วน Positioned ด้านล่างที่แสดงชื่อท่าปัจจุบัน และแก้ไขเป็น:
+
             Positioned(
               bottom: 60,
               left: 0,
@@ -720,25 +738,34 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen> {
                           ),
                         )
                       : currentPose != null
-                          ? Column(
+                          ? Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   currentPose['name'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    // เปลี่ยนสีตามการตรวจจับท่า
+                                    color: currentPredictedPose ==
+                                            currentPose['name']
+                                        ? Colors.green // สีเขียวเมื่อท่าถูกต้อง
+                                        : Colors.red, // สีแดงเมื่อท่าไม่ถูกต้อง
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                if (currentPredictedPose == currentPose['name'])
-                                  const Text(
-                                    'Correct Pose! 👍',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontSize: 18,
-                                    ),
-                                  ),
+                                const SizedBox(
+                                    width: 8), // ระยะห่างระหว่างข้อความกับไอคอน
+                                // แสดงไอคอนติ๊กถูกหรือกากบาทตามความถูกต้องของท่า
+                                Icon(
+                                  currentPredictedPose == currentPose['name']
+                                      ? Icons.check_circle // ไอคอนติ๊กถูก
+                                      : Icons.cancel, // ไอคอนกากบาท
+                                  color: currentPredictedPose ==
+                                          currentPose['name']
+                                      ? Colors.green
+                                      : Colors.red,
+                                  size: 28,
+                                ),
                               ],
                             )
                           : const Text(

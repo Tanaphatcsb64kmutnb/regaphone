@@ -16,6 +16,7 @@ import java.util.concurrent.Executors
 import android.util.Size
 import android.view.ViewGroup
 import com.google.mediapipe.tasks.vision.core.RunningMode
+import androidx.camera.core.AspectRatio
 
 import android.app.Activity
 import android.content.ContextWrapper
@@ -54,6 +55,17 @@ class LiveCameraPlatformView(
                     result.error("INVALID_ARGUMENT", "Invalid pose names", null)
                 }
             }
+
+             "setPoseCorrectness" -> {
+                val isCorrect = call.argument<Boolean>("isCorrect")
+                if (isCorrect != null) {
+                    overlayView.setPoseCorrectness(isCorrect)
+                    result.success(true)
+                } else {
+                    result.error("INVALID_ARGUMENT", "Invalid correctness value", null)
+                }
+            }
+            
            "playRestVideo" -> {
     val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
     val activity = getActivity(context)
@@ -84,13 +96,13 @@ private fun getActivity(context: Context): Activity? {
 
         // สร้าง PreviewView สำหรับแสดงภาพกล้อง
         previewView = PreviewView(context).apply {
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-            layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        }
+    scaleType = PreviewView.ScaleType.FILL_CENTER  // กลับไปใช้ FILL_CENTER
+    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+    layoutParams = FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+    )
+}
 
         // สร้าง OverlayView สำหรับวาด landmarks, เส้นเชื่อม และค่ามุม
         overlayView = OverlayView(context, null).apply {
@@ -168,22 +180,22 @@ private fun getActivity(context: Context): Activity? {
     private fun bindCameraUseCases(cameraProvider: ProcessCameraProvider) {
         cameraProvider.unbindAll()
 
-        val preview = Preview.Builder()
-            .setTargetResolution(Size(1280, 720))
-            .build()
-            .also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            }
+          val preview = Preview.Builder()
+        .setTargetAspectRatio(AspectRatio.RATIO_16_9)  // เปลี่ยนเป็น 16:9
+        .build()
+        .also {
+            it.setSurfaceProvider(previewView.surfaceProvider)
+        }
 
-        val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetResolution(Size(1280, 720))
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
-            .also {
-                it.setAnalyzer(cameraExecutor) { imageProxy ->
-                    poseLandmarkerHelper.detectLiveStream(imageProxy, isFrontCamera)
-                }
+    val imageAnalysis = ImageAnalysis.Builder()
+        .setTargetAspectRatio(AspectRatio.RATIO_16_9)  // เปลี่ยนเป็น 16:9 เช่นกัน
+        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+        .build()
+        .also {
+            it.setAnalyzer(cameraExecutor) { imageProxy ->
+                poseLandmarkerHelper.detectLiveStream(imageProxy, isFrontCamera)
             }
+        }
 
         val cameraSelector = if (isFrontCamera) {
             CameraSelector.DEFAULT_FRONT_CAMERA
