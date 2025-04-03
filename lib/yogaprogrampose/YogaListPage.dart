@@ -34,7 +34,7 @@ class YogaListPage extends StatelessWidget {
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                   title: const Text(
-                    'Rega', // ชื่อแอป
+                    'REGA', // ชื่อแอป
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
