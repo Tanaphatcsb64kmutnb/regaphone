@@ -150,12 +150,14 @@ class FavoritePage extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
+          // ภาพพื้นหลัง
           Positioned.fill(
             child: Image.asset(
-              'assets/img/yoga4.png',
+              'assets/img/yoga2.png',
               fit: BoxFit.cover,
             ),
           ),
+          // Gradient overlay
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -171,33 +173,45 @@ class FavoritePage extends StatelessWidget {
               ),
             ),
           ),
+          // เนื้อหาหลัก
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.arrow_back, color: Colors.white),
-                        SizedBox(width: 4),
-                      ],
-                    ),
+            child: Column(
+              children: [
+                // ส่วนหัวพร้อมปุ่มย้อนกลับและหัวข้อตรงกลาง
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Stack(
+                    children: [
+                      // ปุ่มย้อนกลับด้านซ้าย
+                      Positioned(
+                        left: 16,
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                      // หัวข้อตรงกลาง
+                      const Center(
+                        child: Text(
+                          'รายการโปรด',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'รายการโปรดของคุณ',
-                    style: TextStyle(
-                      fontSize: 28,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Expanded(
+                ),
+                // ส่วนเนื้อหา
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('FavoriteYogaProgram')
@@ -328,8 +342,8 @@ class FavoritePage extends StatelessWidget {
                       },
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

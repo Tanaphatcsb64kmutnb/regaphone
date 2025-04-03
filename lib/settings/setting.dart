@@ -1,126 +1,3 @@
-// import 'package:flutter/material.dart';
-// import '../changepassword/changepassword.dart';
-
-// class SettingsPage extends StatelessWidget {
-//   const SettingsPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.black,
-//       appBar: AppBar(
-//         backgroundColor: Colors.black,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back, color: Colors.white),
-//           onPressed: () => Navigator.pop(context),
-//         ),
-//         title: const Text(
-//           'ตั้งค่า',
-//           style: TextStyle(
-//             color: Colors.white,
-//             fontSize: 20,
-//             fontWeight: FontWeight.bold,
-//           ),
-//         ),
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(20.0),
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.start,
-//           children: [
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceAround,
-//               children: [
-//                 _buildSettingOption(
-//                   context,
-//                   icon: Icons.person,
-//                   label: 'แก้ไขโปรไฟล์',
-//                   onTap: () {
-//                     Navigator.push(
-//                       context,
-//                       MaterialPageRoute(
-//                         builder: (context) => const ChangePasswordPage(),
-//                       ),
-//                     );
-//                   },
-//                 ),
-//                 _buildSettingOption(
-//                   context,
-//                   icon: Icons.notifications,
-//                   label: 'การแจ้งเตือน - ปิด',
-//                   onTap: () {
-//                     // Handle notifications
-//                   },
-//                 ),
-//               ],
-//             ),
-//             const SizedBox(height: 20),
-//             _buildDeleteButton(context),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildSettingOption(
-//     BuildContext context, {
-//     required IconData icon,
-//     required String label,
-//     required VoidCallback onTap,
-//   }) {
-//     return GestureDetector(
-//       onTap: onTap,
-//       child: Column(
-//         children: [
-//           Container(
-//             width: 60,
-//             height: 60,
-//             decoration: BoxDecoration(
-//               shape: BoxShape.circle,
-//               border: Border.all(color: Colors.white, width: 2),
-//             ),
-//             child: Icon(
-//               icon,
-//               color: Colors.white,
-//               size: 30,
-//             ),
-//           ),
-//           const SizedBox(height: 8),
-//           Text(
-//             label,
-//             style: const TextStyle(
-//               color: Colors.white,
-//               fontSize: 14,
-//             ),
-//             textAlign: TextAlign.center,
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildDeleteButton(BuildContext context) {
-//     return Container(
-//       width: 60,
-//       height: 60,
-//       decoration: BoxDecoration(
-//         shape: BoxShape.circle,
-//         color: Colors.red[600],
-//       ),
-//       child: IconButton(
-//         icon: const Icon(
-//           Icons.delete,
-//           color: Colors.white,
-//           size: 30,
-//         ),
-//         onPressed: () {
-//           // Handle delete action
-//         },
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -157,19 +34,10 @@ class SettingsPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                // _buildSettingOption(
-                //   context,
-                //   icon: Icons.person,
-                //   label: 'แก้ไขโปรไฟล์',
-                //   onTap: () {
-                //     // Navigate to profile settings
-                //   },
-                // ),
-
                 _buildSettingOption(
                   context,
-                  icon: Icons.person,
-                  label: 'แก้ไขโปรไฟล์',
+                  icon: Icons.lock_reset, // Changed icon to represent password change
+                  label: 'เปลี่ยนรหัสผ่าน', // Changed label as requested
                   onTap: () {
                     Navigator.push(
                       context,
@@ -190,7 +58,8 @@ class SettingsPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            _buildDeleteButton(context),
+            // Delete account button with text label
+            _buildDeleteWithLabel(context),
           ],
         ),
       ),
@@ -234,23 +103,35 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDeleteButton(BuildContext context) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.red[600],
-      ),
-      child: IconButton(
-        icon: const Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: 30,
-        ),
-        onPressed: () {
-          _showDeleteConfirmation(context);
-        },
+  // New method for delete button with text label
+  Widget _buildDeleteWithLabel(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showDeleteConfirmation(context),
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.red[600],
+            ),
+            child: const Icon(
+              Icons.delete,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'ลบบัญชี',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
