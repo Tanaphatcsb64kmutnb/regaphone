@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../Home/Home.dart'; // เพิ่ม import หน้า Home
 
 class PoseResultPage extends StatelessWidget {
   final String programId;
@@ -66,8 +67,14 @@ class PoseResultPage extends StatelessWidget {
                             IconButton(
                               icon:
                                   const Icon(Icons.close, color: Colors.white),
-                              onPressed: () => Navigator.of(context)
-                                  .popUntil((route) => route.isFirst),
+                              onPressed: () {
+                                // ปุ่มกากบาทปรับให้กลับไปยังหน้า Home
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (context) => const HomePage()),
+                                  (route) => false, // ลบทุก route ออกจาก stack
+                                );
+                              },
                             ),
                             const Expanded(
                               child: Text(
@@ -294,8 +301,14 @@ class PoseResultPage extends StatelessWidget {
                         child: SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () => Navigator.of(context)
-                                .popUntil((route) => route.isFirst),
+                            onPressed: () {
+                              // ใช้ pushAndRemoveUntil เพื่อไปที่หน้า HomePage และลบ route อื่นๆ ทั้งหมด
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (context) => const HomePage()),
+                                (route) => false, // ลบทุก route ออกจาก stack
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white10,
                               padding: const EdgeInsets.symmetric(vertical: 16),

@@ -23,6 +23,9 @@ class MainActivity : FlutterActivity() {
     private val VIDEO_REQUEST_CODE = 1001
     private lateinit var cameraMethodChannel: MethodChannel
     private lateinit var notificationMethodChannel: MethodChannel
+    private var poseLandmarkerHelper: PoseLandmarkerHelper? = null
+    private val SINGLE_VIDEO_CHANNEL = "single_video_view"
+private lateinit var singleVideoMethodChannel: MethodChannel
 
     override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -48,26 +51,43 @@ class MainActivity : FlutterActivity() {
         // Setup notification channel
         notificationMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NOTIFICATION_CHANNEL)
 
+        singleVideoMethodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SINGLE_VIDEO_CHANNEL)
+    
         // Register camera view factory
-        flutterEngine
-            .platformViewsController
-            .registry
-            .registerViewFactory(
-                "live_camera_view",
-                LiveCameraViewFactory(cameraMethodChannel)
-            )
+       flutterEngine
+    .platformViewsController
+    .registry
+    .registerViewFactory(
+        "live_camera_view",
+        LiveCameraViewFactory(this, cameraMethodChannel)
+    )
+
 
         // Setup camera method handler
         cameraMethodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "playRestVideo" -> {
+            val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
+            playRestVideo(videoFileName)
+            result.success(null)
+        }
                 "switchCamera" -> {
                     val isFrontCamera = call.argument<Boolean>("camera") ?: true
                     result.success(null)
                 }
-                "playRestVideo" -> {
-                    playRestVideo()
-                    result.success(null)
-                }
+                
+                 "setAllowedPoses" -> {
+            val poseNames = call.argument<List<String>>("poseNames")
+            if (poseNames != null) {
+                // ส่งต่อไปยัง LiveCameraPlatformView รวมถึง PoseLandmarkerHelper
+                // ในที่นี้เราต้องใช้วิธีส่งผ่าน event ไปยัง LiveCameraPlatformView
+                // เนื่องจากเราไม่มีอ้างอิงโดยตรงถึง LiveCameraPlatformView จาก MainActivity
+                cameraMethodChannel.invokeMethod("internalSetAllowedPoses", mapOf("poseNames" to poseNames))
+                result.success(true)
+            } else {
+                result.error("INVALID_ARGUMENT", "Invalid pose names", null)
+            }
+        }
                 else -> result.notImplemented()
             }
         }
@@ -87,12 +107,34 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+    singleVideoMethodChannel.setMethodCallHandler { call, result ->
+    when (call.method) {
+        "playSingleVideo" -> {
+            val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
+            playSingleVideo(videoFileName)
+            result.success(null)
+        }
+        else -> result.notImplemented()
+    }
+}
+
     }
 
-    private fun playRestVideo() {
-        val intent = Intent(this, VideoActivity::class.java)
-        startActivityForResult(intent, VIDEO_REQUEST_CODE)
-    }
+    // MainActivity.kt
+fun playRestVideo(videoFileName: String = "rest_video") {
+    val intent = Intent(this, VideoActivity::class.java)
+    intent.putExtra("videoFileName", videoFileName)
+    startActivityForResult(intent, VIDEO_REQUEST_CODE)
+}
+
+
+// เพิ่มฟังก์ชัน playSingleVideo
+fun playSingleVideo(videoFileName: String) {
+    val intent = Intent(this, SingleVideoActivity::class.java)
+    intent.putExtra("videoFileName", videoFileName)
+    startActivity(intent) // ไม่ต้องการผลลัพธ์จึงใช้ startActivity แทน startActivityForResult
+}
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)

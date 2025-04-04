@@ -13,7 +13,13 @@ import io.flutter.plugin.platform.PlatformView
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import android.util.Size
 import android.view.ViewGroup
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import androidx.camera.core.AspectRatio
+
+import android.app.Activity
+import android.content.ContextWrapper
 
 class LiveCameraPlatformView(
     private val context: Context,
@@ -27,17 +33,78 @@ class LiveCameraPlatformView(
     private lateinit var overlayView: OverlayView
     private lateinit var poseLandmarkerHelper: PoseLandmarkerHelper
 
+    // รับคำสั่งจาก MethodChannel (เช่น internalSetAllowedPoses)
+  private fun setupMethodChannelListener() {
+    methodChannel.setMethodCallHandler { call, result ->
+        when (call.method) {
+            "internalSetAllowedPoses" -> {
+                val poseNames = call.argument<List<String>>("poseNames")
+                if (poseNames != null) {
+                    poseLandmarkerHelper.setAllowedPoses(poseNames)
+                    result.success(true)
+                } else {
+                    result.error("INVALID_ARGUMENT", "Invalid pose names", null)
+                }
+            }
+            "setAllowedPoses" -> {
+                val poseNames = call.argument<List<String>>("poseNames")
+                if (poseNames != null) {
+                    poseLandmarkerHelper.setAllowedPoses(poseNames)
+                    result.success(true)
+                } else {
+                    result.error("INVALID_ARGUMENT", "Invalid pose names", null)
+                }
+            }
+
+             "setPoseCorrectness" -> {
+                val isCorrect = call.argument<Boolean>("isCorrect")
+                if (isCorrect != null) {
+                    overlayView.setPoseCorrectness(isCorrect)
+                    result.success(true)
+                } else {
+                    result.error("INVALID_ARGUMENT", "Invalid correctness value", null)
+                }
+            }
+            
+           "playRestVideo" -> {
+    val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
+    val activity = getActivity(context)
+    if (activity is MainActivity) {
+        activity.playRestVideo(videoFileName) // เพิ่มการส่งพารามิเตอร์
+        result.success(null)
+    } else {
+        result.error("ERROR", "Unable to retrieve MainActivity", null)
+    }
+}
+
+            else -> result.notImplemented()
+        }
+    }
+}
+private fun getActivity(context: Context): Activity? {
+    var ctx = context
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
+
     init {
         container = FrameLayout(context)
+        setupMethodChannelListener()
 
+        // สร้าง PreviewView สำหรับแสดงภาพกล้อง
         previewView = PreviewView(context).apply {
-            implementationMode = PreviewView.ImplementationMode.COMPATIBLE 
-            layoutParams = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        }
+    scaleType = PreviewView.ScaleType.FILL_CENTER  // กลับไปใช้ FILL_CENTER
+    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+    layoutParams = FrameLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+    )
+}
 
+        // สร้าง OverlayView สำหรับวาด landmarks, เส้นเชื่อม และค่ามุม
         overlayView = OverlayView(context, null).apply {
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -49,9 +116,11 @@ class LiveCameraPlatformView(
         container.addView(previewView)
         container.addView(overlayView)
         overlayView.bringToFront()
+        container.invalidate()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // สร้าง PoseLandmarkerHelper เพื่อประมวลผลภาพ
         poseLandmarkerHelper = PoseLandmarkerHelper(
             context = context,
             methodChannel = methodChannel,
@@ -63,16 +132,39 @@ class LiveCameraPlatformView(
                 override fun onResults(resultBundle: PoseLandmarkerHelper.ResultBundle) {
                     val poseResult = resultBundle.results.firstOrNull() ?: return
                     container.post {
-                        // ใช้ขนาดของ previewView เพื่อให้ landmarks วาดทาบร่างกายจริง
+                        // ส่งผลลัพธ์ให้ OverlayView วาด landmarks และเส้นเชื่อม
                         overlayView.setResults(
                             poseResult,
-                            previewView.height,
-                            previewView.width
+                            resultBundle.inputImageHeight,
+                            resultBundle.inputImageWidth
                         )
+                        // คำนวณมุมจาก landmarks และส่งไป OverlayView เพื่อแสดงค่าองศา
+                        poseResult.landmarks().firstOrNull()?.let { landmarks ->
+                            val angleMap = poseLandmarkerHelper.extractJointAngles(landmarks)
+                            overlayView.setAngles(angleMap)
+
+                            // รับความแตกต่างของมุมจาก PoseLandmarkerHelper
+                            val discrepancies = poseLandmarkerHelper.getAngleDiscrepancies()
+                            Log.d("LiveCameraPlatformView", "Setting discrepancies to OverlayView: $discrepancies")
+                            
+                            // ส่งไปให้ OverlayView วาดวงกลมรอบมุมที่ไม่ถูกต้อง
+                            overlayView.setAngleDiscrepancies(discrepancies)
+                        }
+                        overlayView.bringToFront()
+                    }
+                    // ส่ง landmarks ไปยัง Flask server
+                    poseResult.landmarks().firstOrNull()?.let { landmarks ->
+                        poseLandmarkerHelper.sendLandmarksToFlask(landmarks)
                     }
                 }
             }
         )
+
+        // ถ้าเป็นกล้องหน้า ให้ flip ภาพให้เหมือนกระจก
+        if (isFrontCamera) {
+            previewView.scaleX = -1f
+            overlayView.scaleX = -1f
+        }
 
         startCamera()
     }
@@ -88,22 +180,22 @@ class LiveCameraPlatformView(
     private fun bindCameraUseCases(cameraProvider: ProcessCameraProvider) {
         cameraProvider.unbindAll()
 
-        val preview = Preview.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-            .build()
-            .also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            }
+          val preview = Preview.Builder()
+        .setTargetAspectRatio(AspectRatio.RATIO_16_9)  // เปลี่ยนเป็น 16:9
+        .build()
+        .also {
+            it.setSurfaceProvider(previewView.surfaceProvider)
+        }
 
-        val imageAnalysis = ImageAnalysis.Builder()
-            .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
-            .also {
-                it.setAnalyzer(cameraExecutor) { imageProxy ->
-                    poseLandmarkerHelper.detectLiveStream(imageProxy, isFrontCamera)
-                }
+    val imageAnalysis = ImageAnalysis.Builder()
+        .setTargetAspectRatio(AspectRatio.RATIO_16_9)  // เปลี่ยนเป็น 16:9 เช่นกัน
+        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+        .build()
+        .also {
+            it.setAnalyzer(cameraExecutor) { imageProxy ->
+                poseLandmarkerHelper.detectLiveStream(imageProxy, isFrontCamera)
             }
+        }
 
         val cameraSelector = if (isFrontCamera) {
             CameraSelector.DEFAULT_FRONT_CAMERA
@@ -123,9 +215,7 @@ class LiveCameraPlatformView(
         }
     }
 
-    override fun getView(): View {
-        return container
-    }
+    override fun getView(): View = container
 
     override fun dispose() {
         cameraExecutor.shutdown()
