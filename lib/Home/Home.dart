@@ -18,6 +18,8 @@ import '../services/session_service.dart';
 import '../settings/setting.dart';
 import '../AboutUs/about_us.dart';
 import '../ContactUs/contact_us.dart';
+import '../services/connectivity_service.dart';
+import '../widgets/no_internet_banner.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -32,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   Stream<RemoteMessage> _notificationsStream = Stream.empty();
   bool _isFirstNotification = true;
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  bool _isConnected = true; // เพิ่มตัวแปรสำหรับเก็บสถานะการเชื่อมต่อ
 
 // เพิ่มฟังก์ชันใหม่สำหรับจัดการการแจ้งเตือนตามสถานะ login
   Future<void> _subscribeToNotifications() async {
@@ -87,6 +90,26 @@ class _HomePageState extends State<HomePage> {
     // _initializeFirebaseMessaging();
     _setupNotificationListeners(); // เพิ่มบรรทัดนี้
     _checkAuthAndInitialize();
+
+    // เพิ่มการตรวจสอบการเชื่อมต่อ
+    _checkConnectivity();
+    ConnectivityService().isConnected.listen(_updateConnectionStatus);
+
+    // ทำงานพื้นฐานที่ไม่ต้องใช้อินเทอร์เน็ต
+    _fetchUserData();
+
+    // ทำงานที่ต้องใช้อินเทอร์เน็ตแบบมีเงื่อนไข
+    _initializeOnlineFeatures();
+  }
+
+// 2. เพิ่มฟังก์ชันใหม่สำหรับเริ่มต้นฟีเจอร์ที่ต้องใช้อินเทอร์เน็ต
+  void _initializeOnlineFeatures() {
+    if (_isConnected) {
+      _checkSession();
+      initializeNotifications();
+      _setupNotificationListeners();
+      _checkAuthAndInitialize();
+    }
   }
 
   void _checkAuthAndInitialize() {
@@ -253,6 +276,30 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // 4. เพิ่มฟังก์ชันสำหรับตรวจสอบการเชื่อมต่อ
+  Future<void> _checkConnectivity() async {
+    final isConnected = await ConnectivityService().checkConnection();
+    if (mounted) {
+      setState(() {
+        _isConnected = isConnected;
+      });
+    }
+  }
+
+// 3. แก้ไขฟังก์ชัน _updateConnectionStatus
+  void _updateConnectionStatus(bool isConnected) {
+    if (mounted) {
+      setState(() {
+        _isConnected = isConnected;
+      });
+
+      // เริ่มต้นฟีเจอร์ที่ต้องใช้อินเทอร์เน็ตเมื่อการเชื่อมต่อกลับมา
+      if (isConnected) {
+        _initializeOnlineFeatures();
+      }
+    }
+  }
+
   void _showInAppMessage(RemoteMessage message) {
     showDialog(
       context: context,
@@ -261,19 +308,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // 4. แก้ไขฟังก์ชัน _fetchUserData เพื่อป้องกัน error เมื่อไม่มีอินเทอร์เน็ต
   void _fetchUserData() async {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final DocumentSnapshot userData = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      setState(() {
-        username = userData['username'] ?? 'User';
-      });
+    try {
+      final User? user = FirebaseAuth.instance.currentUser;
+      if (user != null && _isConnected) {
+        final DocumentSnapshot userData = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (mounted && userData.exists) {
+          setState(() {
+            username = userData['username'] ?? 'User';
+          });
+        }
+      }
+    } catch (e) {
+      print('ไม่สามารถดึงข้อมูลผู้ใช้: $e');
+      // ใช้ค่าเริ่มต้นหากไม่สามารถดึงข้อมูลได้
     }
   }
-
   // void _showLogoutConfirmation(BuildContext context) {
   //   showDialog(
   //     context: context,

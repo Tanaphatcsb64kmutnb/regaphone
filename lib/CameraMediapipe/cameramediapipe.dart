@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'pose_result.dart';
+import '../services/connectivity_service.dart';
 
 class CameraMediapipeApp extends StatelessWidget {
   final String? programId;
@@ -88,6 +89,14 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen>
     }
     _setupMethodChannel();
 
+    _checkConnectivity();
+    ConnectivityService().isConnected.listen((connected) {
+      if (mounted) {
+        setState(() {
+          isConnected = connected;
+        });
+      }
+    });
     // เพิ่ม Animation Controller
     _scoreAnimationController = AnimationController(
       vsync: this,
@@ -121,6 +130,15 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen>
         });
       }
     });
+  }
+
+  Future<void> _checkConnectivity() async {
+    final connected = await ConnectivityService().checkConnection();
+    if (mounted) {
+      setState(() {
+        isConnected = connected;
+      });
+    }
   }
 
   Future<void> _initializeUser() async {

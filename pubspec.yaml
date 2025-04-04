@@ -60,6 +60,7 @@ dependencies:
   shared_preferences: ^2.5.1
   flutter_dotenv: ^5.2.1
   
+  
 
 dev_dependencies:
 
@@ -98,6 +99,7 @@ flutter:
     - assets/img/yoga2.png
     - assets/img/yoga3.png
     - assets/img/yoga4.png
+    - assets/img/sex1.png
     - assets/img/yoga_pose1.png
     - assets/img/yoga_pose2.png
     - assets/img/yoga_pose3.png
