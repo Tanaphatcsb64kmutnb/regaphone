@@ -427,7 +427,7 @@ class _HistoryPageState extends State<HistoryPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'ประวัติการเล่นโยคะของคุณ',
+          'ประวัติการใช้งาน',
           style: TextStyle(
             fontSize: 20,
             color: Colors.white,
