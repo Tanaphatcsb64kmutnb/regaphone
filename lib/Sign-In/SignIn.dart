@@ -395,6 +395,7 @@ import '../changepassword/changeuseemail.dart';
 import '../widgets/no_internet_dialog.dart';
 import '../services/connectivity_service.dart';
 import '../widgets/login_success_widget.dart'; // Import our new success widget
+import 'package:google_sign_in/google_sign_in.dart';
 
 class SignInPage extends StatefulWidget {
   final Map<String, dynamic>? pendingNotification;
@@ -677,9 +678,17 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   void _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     // Check for internet connection first
     bool isConnected = await _connectivityService.checkConnection();
     if (!isConnected) {
+      setState(() {
+        _isLoading = false;
+      });
+
       // Show no internet dialog
       if (mounted) {
         showDialog(
@@ -696,8 +705,75 @@ class _SignInPageState extends State<SignInPage> {
       return;
     }
 
-    // Implement Google Sign-In logic here
-    print('Google Sign-In button clicked');
+    try {
+      // Trigger the Google Sign-In flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        // User canceled the sign-in flow
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Obtain auth details from the Google sign-in
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // Create a new credential for Firebase
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      // Check if this is a new user
+      final bool isNewUser =
+          userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        // Create a new user document in Firestore
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'username': googleUser.displayName ??
+              'User${DateTime.now().millisecondsSinceEpoch}',
+          'email': googleUser.email,
+          'photoURL': googleUser.photoUrl,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // บันทึก FCM Token
+      await _saveFCMToken(userCredential.user!.uid);
+
+      // บันทึก session
+      await SessionService.saveSession({
+        'uid': userCredential.user!.uid,
+        'email': googleUser.email,
+        'username': googleUser.displayName ?? 'User',
+        'lastLogin': DateTime.now().toIso8601String(),
+      });
+
+      if (mounted) {
+        // Show the beautiful success widget
+        _showBeautifulLoginSuccess(context, googleUser.displayName ?? 'User');
+      }
+    } catch (e) {
+      print('Error during Google Sign-In: $e');
+      if (mounted) {
+        _showErrorDialog(
+            'Failed to sign in with Google. Please try again later.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override

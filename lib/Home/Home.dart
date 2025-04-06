@@ -360,31 +360,183 @@ class _HomePageState extends State<HomePage> {
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ยืนยันการออกจากระบบ'),
-        content: const Text('คุณต้องการออกจากระบบใช่หรือไม่?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ยกเลิก'),
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.85),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.purple.withOpacity(0.3),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ],
+            border: Border.all(
+              color: Colors.purple.withOpacity(0.2),
+              width: 1,
+            ),
           ),
-          TextButton(
-            onPressed: () async {
-              // ล้าง session ก่อนออกจากระบบ
-              await SessionService.clearSession();
-              // ออกจากระบบ Firebase
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SignInPage()),
-                  (route) => false, // ล้าง stack ทั้งหมด
-                );
-              }
-            },
-            child: const Text('ออกจากระบบ'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Logout Icon
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade800.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.logout_rounded,
+                  color: Colors.red.shade400,
+                  size: 34,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Title
+              const Text(
+                'ออกจากระบบ',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+
+              // Message
+              const Text(
+                'คุณต้องการออกจากระบบใช่หรือไม่?',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 28),
+
+              // Buttons
+              Row(
+                children: [
+                  // Cancel Button
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        backgroundColor: Colors.grey.withOpacity(0.1),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'ยกเลิก',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Logout Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // Show loading indicator
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext context) {
+                            return Dialog(
+                              backgroundColor: Colors.transparent,
+                              elevation: 0,
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black87,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'กำลังออกจากระบบ...',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+
+                        // ล้าง session ก่อนออกจากระบบ
+                        await SessionService.clearSession();
+                        // ออกจากระบบ Firebase
+                        await FirebaseAuth.instance.signOut();
+
+                        if (mounted) {
+                          // Remove loading dialog
+                          Navigator.pop(context);
+                          // Remove logout confirm dialog
+                          Navigator.pop(context);
+                          // Navigate to sign in
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SignInPage()),
+                            (route) => false, // ล้าง stack ทั้งหมด
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.red.shade700,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'ออกจากระบบ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -543,19 +695,40 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       endDrawer: _buildDrawer(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Column(
-              children: [
-                _buildMainCard(),
-                const SizedBox(height: 16),
-                _buildGridCards(),
-              ],
+      body: Column(
+        // เปลี่ยนจาก SafeArea เป็น Column
+        children: [
+          // เพิ่มแบนเนอร์แจ้งเตือนไม่มีอินเทอร์เน็ต
+          if (!_isConnected)
+            NoInternetBanner(
+              onRetry: () async {
+                // ตรวจสอบการเชื่อมต่ออีกครั้ง
+                final isConnected =
+                    await ConnectivityService().checkConnection();
+                if (mounted) {
+                  _updateConnectionStatus(isConnected);
+                }
+              },
+            ),
+          Expanded(
+            // ครอบ SafeArea ด้วย Expanded
+            child: SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Column(
+                    children: [
+                      _buildMainCard(),
+                      const SizedBox(height: 16),
+                      _buildGridCards(),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

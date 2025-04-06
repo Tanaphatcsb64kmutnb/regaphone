@@ -59,6 +59,8 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   shared_preferences: ^2.5.1
   flutter_dotenv: ^5.2.1
+  google_fonts: ^4.0.4
+  google_sign_in: ^6.1.5  # หรือเวอร์ชันล่าสุด
   
   
 
