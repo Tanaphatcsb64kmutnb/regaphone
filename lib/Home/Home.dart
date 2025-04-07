@@ -131,16 +131,43 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // void _setupNotificationListeners() {
+  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  //     if (mounted && message.notification != null) {
+  //       // แทนที่จะใช้ _saveNotificationToLocalStorage(message)
+  //       // ให้ใช้ NotificationManager แทน
+  //       NotificationManager.saveNotification(message);
+
+  //       // แสดงป๊อปอัพการแจ้งเตือน
+  //       showDialog(
+  //         context: context,
+  //         builder: (context) => NotificationDialog(
+  //           notificationData: {
+  //             'title': message.notification?.title,
+  //             'body': message.notification?.body,
+  //             'timestamp': DateTime.now().millisecondsSinceEpoch,
+  //             ...message.data
+  //           },
+  //         ),
+  //       );
+  //     }
+  //   });
+
+// แก้ไขใน Home.dart
   void _setupNotificationListeners() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (mounted && message.notification != null) {
-        _saveNotificationToLocalStorage(message);
+        print('📱 ได้รับการแจ้งเตือนใหม่: ${message.notification?.title}');
+
+        // บันทึกการแจ้งเตือน
+        // NotificationManager.saveNotification(message);
 
         // แสดงป๊อปอัพการแจ้งเตือน
         showDialog(
           context: context,
           builder: (context) => NotificationDialog(
             notificationData: {
+              'id': DateTime.now().millisecondsSinceEpoch.toString(),
               'title': message.notification?.title,
               'body': message.notification?.body,
               'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -151,23 +178,75 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    // เพิ่มการรับฟังเหตุการณ์อื่นๆ ตามต้องการ
+    // // เพิ่มการรับฟังเหตุการณ์อื่นๆ ตามต้องการ
+    // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    //   _saveNotificationToLocalStorage(message);
+    // });
+
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _saveNotificationToLocalStorage(message);
+      // NotificationManager.saveNotification(message);
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => NotificationDialog(
+              notificationData: {
+                'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                'title': message.notification?.title,
+                'body': message.notification?.body,
+                'timestamp': DateTime.now().millisecondsSinceEpoch,
+                ...message.data
+              },
+            ),
+          ),
+        );
+      }
     });
 
     // ตรวจสอบการเปิดแอปจากการแจ้งเตือน
+    //   FirebaseMessaging.instance
+    //       .getInitialMessage()
+    //       .then((RemoteMessage? message) {
+    //     if (message != null) {
+    //       _saveNotificationToLocalStorage(message);
+    //     }
+    //   });
+    // }
+
     FirebaseMessaging.instance
         .getInitialMessage()
         .then((RemoteMessage? message) {
       if (message != null) {
-        _saveNotificationToLocalStorage(message);
+        NotificationManager.saveNotification(message);
       }
     });
   }
 
   // ใน _HomePageState class เพิ่มฟังก์ชัน
   // ใน Home.dart
+  // void _saveNotificationToLocalStorage(RemoteMessage message) async {
+  //   final prefs = await SharedPreferences.getInstance();
+
+  //   // โหลดข้อมูลเดิม
+  //   final notificationsJson = prefs.getString('notifications') ?? '[]';
+  //   final notifications = List<Map<String, dynamic>>.from(
+  //       jsonDecode(notificationsJson).map((x) => Map<String, dynamic>.from(x)));
+
+  //   // เพิ่มการแจ้งเตือนใหม่
+  //   notifications.insert(0, {
+  //     'title': message.notification?.title,
+  //     'body': message.notification?.body,
+  //     'timestamp': DateTime.now().millisecondsSinceEpoch,
+  //     'data': message.data,
+  //     'isRead': false,
+  //   });
+
+  //   // บันทึกกลับ
+  //   await prefs.setString('notifications', jsonEncode(notifications));
+  // }
+
+// ปรับปรุงใน _saveNotificationToLocalStorage ใน Home.dart
   void _saveNotificationToLocalStorage(RemoteMessage message) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -176,14 +255,26 @@ class _HomePageState extends State<HomePage> {
     final notifications = List<Map<String, dynamic>>.from(
         jsonDecode(notificationsJson).map((x) => Map<String, dynamic>.from(x)));
 
-    // เพิ่มการแจ้งเตือนใหม่
+    // สร้าง unique ID สำหรับการแจ้งเตือน
+    final notificationId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    // เพิ่มการแจ้งเตือนใหม่พร้อมข้อมูลเพิ่มเติม
     notifications.insert(0, {
+      'id': notificationId,
       'title': message.notification?.title,
       'body': message.notification?.body,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
       'data': message.data,
       'isRead': false,
+      'category': message.data['category'] ?? 'general', // สำหรับการแยกหมวดหมู่
+      'priority':
+          message.data['priority'] ?? 'normal', // สำหรับการจัดลำดับความสำคัญ
     });
+
+    // ถ้ามีการแจ้งเตือนมากกว่า 100 รายการ ให้ลบรายการเก่าออก
+    if (notifications.length > 100) {
+      notifications.removeRange(100, notifications.length);
+    }
 
     // บันทึกกลับ
     await prefs.setString('notifications', jsonEncode(notifications));
@@ -564,11 +655,34 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _openNotifications(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const NotificationsPage()),
-    );
+  void _openNotifications(BuildContext context) async {
+    // อัปเดตสถานะการอ่านของการแจ้งเตือนทั้งหมดก่อนเปิดหน้า NotificationsPage
+    final prefs = await SharedPreferences.getInstance();
+    final notificationsJson = prefs.getString('notifications') ?? '[]';
+    final notifications = List<Map<String, dynamic>>.from(
+        jsonDecode(notificationsJson).map((x) => Map<String, dynamic>.from(x)));
+
+    // อัปเดตสถานะการอ่านของการแจ้งเตือนทั้งหมด
+    bool hasUpdated = false;
+    for (var i = 0; i < notifications.length; i++) {
+      if (notifications[i]['isRead'] == false) {
+        notifications[i]['isRead'] = true;
+        hasUpdated = true;
+      }
+    }
+
+    // บันทึกกลับถ้ามีการอัปเดต
+    if (hasUpdated) {
+      await prefs.setString('notifications', jsonEncode(notifications));
+    }
+
+    // นำทางไปยังหน้าการแจ้งเตือน
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const NotificationsPage()),
+      );
+    }
   }
 
   // เพิ่มต่อจากฟังก์ชันอื่นๆ ก่อน build
