@@ -27,7 +27,6 @@ class AboutUsPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header image
             Container(
               height: 200,
               width: double.infinity,
@@ -61,14 +60,13 @@ class AboutUsPage extends StatelessWidget {
                 ),
               ),
             ),
-            // About section
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'แอพพลิเคชันโยคะสำหรับทุกคน',
+                    'REGA คืออะไร?',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -77,7 +75,7 @@ class AboutUsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'REGA เป็นแอพพลิเคชันโยคะที่ออกแบบมาเพื่อช่วยให้ผู้ใช้ทุกระดับสามารถฝึกโยคะได้อย่างถูกต้องและปลอดภัย โดยใช้เทคโนโลยี AI ในการวิเคราะห์และแนะนำท่าทางที่ถูกต้อง',
+                    'REGA (Rehabilitation with Yoga and AI) คือแอปพลิเคชันสำหรับฝึกโยคะบำบัดที่ผสานเทคโนโลยี AI เพื่อให้ผู้ใช้งานสามารถฝึกโยคะได้อย่างปลอดภัย มีประสิทธิภาพ และลดความเสี่ยงจากการบาดเจ็บ โดยใช้ MediaPipe ตรวจจับ keypoints ของร่างกาย พร้อมกับการประมวลผลด้วยโมเดล LSTM ร่วมกับ CNN และการตรวจสอบมุมร่างกาย (Angle Checking) เพื่อให้ feedback แบบเรียลไทม์',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,
@@ -85,31 +83,27 @@ class AboutUsPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  
-                  // Mission section
+
                   _buildInfoSection(
-                    icon: Icons.flag,
-                    title: 'พันธกิจของเรา',
-                    content: 'เรามุ่งมั่นที่จะทำให้การฝึกโยคะเข้าถึงได้สำหรับทุกคน ไม่ว่าจะอยู่ที่ไหน มีประสบการณ์มากน้อยเพียงใด เราเชื่อว่าโยคะสามารถเปลี่ยนแปลงชีวิตและสุขภาพของคุณได้ในทางที่ดีขึ้น',
+                    icon: Icons.health_and_safety,
+                    title: 'วัตถุประสงค์ของเรา',
+                    content: 'เพื่อให้ผู้ใช้งานสามารถฝึกโยคะได้อย่างถูกต้องและปลอดภัยด้วยระบบ AI ตรวจจับข้อผิดพลาดแบบเรียลไทม์ พร้อมทั้งเก็บข้อมูลพฤติกรรมและความก้าวหน้าในการฝึก',
                   ),
-                  
-                  // Technology section
+
                   _buildInfoSection(
-                    icon: Icons.smart_toy,
-                    title: 'เทคโนโลยีของเรา',
-                    content: 'REGA ใช้เทคโนโลยี AI และ Computer Vision ในการตรวจจับและวิเคราะห์ท่าทางของผู้ใช้ แล้วให้คำแนะนำในการปรับปรุงแบบเรียลไทม์ เพื่อให้ผู้ใช้สามารถฝึกโยคะได้อย่างถูกต้องและปลอดภัย',
+                    icon: Icons.devices,
+                    title: 'ระบบที่ใช้ในแอปพลิเคชัน',
+                    content: 'แอปผู้ใช้งานพัฒนาด้วย Flutter และระบบผู้ดูแลพัฒนาด้วย React ใช้ Firebase สำหรับจัดเก็บข้อมูลทั้งหมด มีโปรแกรมโยคะ 2 หมวด ได้แก่ โปรแกรมบรรเทาอาการปวด และโปรแกรมฟื้นฟูภาวะสุขภาพ เช่น โรคหัวใจหรือความดันโลหิตสูง',
                   ),
-                  
-                  // Team section
+
                   _buildInfoSection(
-                    icon: Icons.people,
-                    title: 'ทีมของเรา',
-                    content: 'ทีมของเราประกอบด้วยนักพัฒนาซอฟต์แวร์ ผู้เชี่ยวชาญด้านโยคะ และนักออกแบบประสบการณ์ผู้ใช้ที่มีความหลงใหลในการสร้างประสบการณ์การฝึกโยคะที่ดีที่สุดสำหรับผู้ใช้ทุกคน',
+                    icon: Icons.analytics,
+                    title: 'ความสามารถหลัก',
+                    content: 'ระบบสามารถตรวจจับ keypoints จาก MediaPipe วิเคราะห์ด้วย LSTM + CNN และ Angle Checking ให้ feedback แบบ real-time พร้อมทั้งแสดงผลคะแนนและพัฒนาการของผู้ใช้ตลอดการฝึก',
                   ),
-                  
+
                   const SizedBox(height: 30),
-                  
-                  // Contact section
+
                   const Text(
                     'ติดต่อเรา',
                     style: TextStyle(
@@ -121,36 +115,25 @@ class AboutUsPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildContactItem(
                     icon: Icons.email,
-                    text: 'contact@rega-yoga.com',
+                    text: 's6404062663100@email.kmutnb.ac.th',
                   ),
                   const SizedBox(height: 12),
                   _buildContactItem(
                     icon: Icons.phone,
-                    text: '02-123-4567',
+                    text: '09-900-73444',
                   ),
                   const SizedBox(height: 12),
                   _buildContactItem(
                     icon: Icons.location_on,
                     text: 'กรุงเทพมหานคร, ประเทศไทย',
                   ),
-                  
+
                   const SizedBox(height: 40),
+
                   
-                  // Social links
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildSocialButton(Icons.facebook, () {}),
-                      const SizedBox(width: 20),
-                      _buildSocialButton(Icons.camera_alt, () {}),
-                      const SizedBox(width: 20),
-                      _buildSocialButton(Icons.tiktok, () {}),
-                    ],
-                  ),
-                  
+
                   const SizedBox(height: 30),
-                  
-                  // Footer
+
                   Center(
                     child: Text(
                       '© ${DateTime.now().year} REGA. All rights reserved.',
@@ -169,7 +152,7 @@ class AboutUsPage extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildInfoSection({
     required IconData icon,
     required String title,
@@ -221,7 +204,7 @@ class AboutUsPage extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildContactItem({
     required IconData icon,
     required String text,
@@ -242,25 +225,6 @@ class AboutUsPage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-  
-  Widget _buildSocialButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
     );
   }
 }

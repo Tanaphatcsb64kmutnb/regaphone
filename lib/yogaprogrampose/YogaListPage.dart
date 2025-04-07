@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // เพิ่ม import นี้
+import 'package:firebase_auth/firebase_auth.dart';
 import './ProgramDetailPage.dart';
 
 class YogaListPage extends StatelessWidget {
@@ -13,28 +13,25 @@ class YogaListPage extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // พื้นหลังรูป listBG.png
           Positioned.fill(
             child: Image.asset(
-              'assets/img/listBG.png', // Path ของรูป listBG.png
+              'assets/img/listBG.png',
               fit: BoxFit.cover,
             ),
           ),
-          // ชั้นสีดำโปร่งใส
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.8), // ปรับความโปร่งใส
+              color: Colors.black.withOpacity(0.8),
             ),
           ),
           SafeArea(
             child: Column(
               children: [
-                // AppBar
                 AppBar(
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                   title: const Text(
-                    'REGA', // ชื่อแอป
+                    'REGA',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -47,7 +44,6 @@ class YogaListPage extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                // เนื้อหาในหน้า
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
@@ -73,108 +69,108 @@ class YogaListPage extends StatelessWidget {
                         itemCount: yogaPrograms.length,
                         itemBuilder: (context, index) {
                           final yogaProgram = yogaPrograms[index];
-                          final pictureFileName = yogaProgram['Picture'] ??
-                              ''; // ชื่อไฟล์รูปภาพจาก field Picture
+                          final pictureFileName = yogaProgram['Picture'] ?? '';
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                  offset: const Offset(0, 5),
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProgramDetailPage(
+                                    programId: yogaProgram.id,
+                                  ),
                                 ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                // รูปภาพของรายการ
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: pictureFileName.isNotEmpty
-                                      ? Image.asset(
-                                          'assets/img/$pictureFileName', // ใช้ชื่อไฟล์รูปภาพ
-                                          width: double.infinity,
-                                          height: 180,
-                                          fit: BoxFit.cover,
-                                        )
-                                      : const Center(
-                                          child: Icon(
-                                            Icons.broken_image,
-                                            color: Colors.white,
-                                            size: 48,
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    blurRadius: 10,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: pictureFileName.isNotEmpty
+                                        ? Image.asset(
+                                            'assets/img/$pictureFileName',
+                                            width: double.infinity,
+                                            height: 180,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : const Center(
+                                            child: Icon(
+                                              Icons.broken_image,
+                                              color: Colors.white,
+                                              size: 48,
+                                            ),
                                           ),
-                                        ),
-                                ),
-                                // เลเยอร์โปร่งใส
-                                Positioned.fill(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      color: Colors.black
-                                          .withOpacity(0.4), // ปรับ opacity
-                                    ),
                                   ),
-                                ),
-                                // ชื่อโปรแกรม
-                                Positioned(
-                                  top: 16,
-                                  left: 16,
-                                  child: Text(
-                                    yogaProgram['Name'] ?? 'No Name',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                // "Yoga Therapy" Text
-                                Positioned(
-                                  top: 16,
-                                  right: 16,
-                                  child: const Text(
-                                    'Yoga Therapy',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                ),
-                                // ปุ่ม Know More
-                                Positioned(
-                                  bottom: 16,
-                                  right: 16,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ProgramDetailPage(
-                                            programId: yogaProgram.id,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color.fromARGB(164, 0, 0, 0),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        color: Colors.black.withOpacity(0.4),
                                       ),
                                     ),
-                                    child: const Text(
-                                      'Know More',
-                                      style: TextStyle(
-                                          fontSize: 14, color: Colors.white),
+                                  ),
+                                  // ชื่อโปรแกรม
+                                  Positioned(
+                                    top: 16,
+                                    left: 16,
+                                    right: 16,
+                                    child: Text(
+                                      yogaProgram['Name'] ?? 'No Name',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  // ปุ่ม Know More
+                                  Positioned(
+                                    bottom: 16,
+                                    right: 16,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                ProgramDetailPage(
+                                              programId: yogaProgram.id,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color.fromARGB(164, 0, 0, 0),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Know More',
+                                        style: TextStyle(
+                                            fontSize: 14, color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
