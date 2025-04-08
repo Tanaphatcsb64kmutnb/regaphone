@@ -169,13 +169,13 @@ class _ContactUsPageState extends State<ContactUsPage> {
           _buildContactItem(
             icon: Icons.phone,
             title: 'โทรศัพท์:',
-            subtitle: '02-123-4567',
+            subtitle: '09-900-73444',
           ),
           const Divider(color: Colors.white24),
           _buildContactItem(
             icon: Icons.email,
             title: 'อีเมล:',
-            subtitle: 'contact@rega-yoga.com',
+            subtitle: 'kkittitat1608@gmail.com',
           ),
           const Divider(color: Colors.white24),
           _buildContactItem(
@@ -274,16 +274,16 @@ class _ContactUsPageState extends State<ContactUsPage> {
               border: Border.all(color: Colors.white30, width: 1),
               borderRadius: BorderRadius.circular(30),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.directions,
                   color: Colors.white,
                   size: 20,
                 ),
-                const SizedBox(width: 10),
-                const Text(
+                SizedBox(width: 10),
+                Text(
                   'ดูตำแหน่งที่ตั้ง',
                   style: TextStyle(
                     color: Colors.white,
@@ -335,7 +335,8 @@ class _ContactUsPageState extends State<ContactUsPage> {
               if (value == null || value.isEmpty) {
                 return 'กรุณากรอกอีเมล';
               }
-              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                  .hasMatch(value)) {
                 return 'กรุณากรอกอีเมลให้ถูกต้อง';
               }
               return null;
@@ -397,12 +398,14 @@ class _ContactUsPageState extends State<ContactUsPage> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 3,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.black),
                         ),
                       )
                     : const Text(
                         'ส่งข้อความ',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
             ),

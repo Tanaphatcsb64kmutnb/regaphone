@@ -1,150 +1,3 @@
-// // import 'package:flutter/material.dart';
-
-// // class HistoryPage extends StatelessWidget {
-// //   const HistoryPage({Key? key}) : super(key: key);
-
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     // ข้อมูลประวัติตัวอย่าง
-// //     const String programTitle = 'OFFICE SYNDROME';
-// //     const String lastPlayedDate = '2/8/2567';
-// //     const String lastPlayedTime = '01:57 น.';
-// //     const String imagePath = 'assets/img/listBG.png'; // รูปในการ์ด
-
-// //     return Scaffold(
-// //       // ไม่ใส่ appBar เพื่อออกแบบ Header เอง (Stack + Positioned)
-// //       body: Stack(
-// //         children: [
-// //           // ภาพพื้นหลัง
-// //           Positioned.fill(
-// //             child: Image.asset(
-// //               'assets/img/yoga4.png', // พื้นหลังตามต้องการ
-// //               fit: BoxFit.cover,
-// //             ),
-// //           ),
-
-// //           // เลเยอร์ไล่สีดำโปร่งใสเล็กน้อย ทับบนพื้นหลัง เพื่อให้อ่านข้อความได้ชัด
-// //           Positioned.fill(
-// //             child: Container(
-// //               decoration: BoxDecoration(
-// //                 gradient: LinearGradient(
-// //                   begin: Alignment.topCenter,
-// //                   end: Alignment.bottomCenter,
-// //                   colors: [
-// //                     Colors.black.withOpacity(0.7),
-// //                     Colors.black.withOpacity(0.3),
-// //                     Colors.black.withOpacity(0.7),
-// //                   ],
-// //                 ),
-// //               ),
-// //             ),
-// //           ),
-
-// //           // เนื้อหาทับด้านบน
-// //           SafeArea(
-// //             child: Padding(
-// //               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-// //               child: Column(
-// //                 crossAxisAlignment: CrossAxisAlignment.start,
-// //                 children: [
-// //                   // ปุ่มย้อนกลับ
-// //                   GestureDetector(
-// //                     onTap: () => Navigator.pop(context),
-// //                     child: const Row(
-// //                       mainAxisSize: MainAxisSize.min,
-// //                       children: [
-// //                         Icon(Icons.arrow_back, color: Colors.white),
-// //                         SizedBox(width: 4),
-// //                       ],
-// //                     ),
-// //                   ),
-
-// //                   const SizedBox(height: 24),
-
-// //                   // หัวข้อหลัก
-// //                   const Text(
-// //                     'ประวัติการเล่นโยคะของคุณ',
-// //                     style: TextStyle(
-// //                       fontSize: 28,
-// //                       color: Colors.white,
-// //                       fontWeight: FontWeight.bold,
-// //                     ),
-// //                   ),
-
-// //                   const SizedBox(height: 24),
-
-// //                   // การ์ดแสดงประวัติล่าสุด
-// //                   Container(
-// //                     padding: const EdgeInsets.all(16),
-// //                     decoration: BoxDecoration(
-// //                       color: Colors.black.withOpacity(0.4),
-// //                       borderRadius: BorderRadius.circular(12),
-// //                     ),
-// //                     child: Row(
-// //                       children: [
-// //                         // รูปในการ์ด (ทรงโค้งมน)
-// //                         ClipRRect(
-// //                           borderRadius: BorderRadius.circular(8),
-// //                           child: Image.asset(
-// //                             imagePath,
-// //                             width: 80,
-// //                             height: 80,
-// //                             fit: BoxFit.cover,
-// //                           ),
-// //                         ),
-// //                         const SizedBox(width: 16),
-
-// //                         // ข้อความรายละเอียด
-// //                         const Expanded(
-// //                           child: Column(
-// //                             crossAxisAlignment: CrossAxisAlignment.start,
-// //                             children: [
-// //                               Text(
-// //                                 programTitle,
-// //                                 style: TextStyle(
-// //                                   fontSize: 18,
-// //                                   color: Colors.white,
-// //                                   fontWeight: FontWeight.bold,
-// //                                 ),
-// //                               ),
-// //                               SizedBox(height: 4),
-// //                               Text(
-// //                                 'เล่นล่าสุด : $lastPlayedDate\nเวลา: $lastPlayedTime',
-// //                                 style: TextStyle(
-// //                                   fontSize: 14,
-// //                                   color: Colors.white70,
-// //                                 ),
-// //                               ),
-// //                             ],
-// //                           ),
-// //                         ),
-// //                       ],
-// //                     ),
-// //                   ),
-
-// //                   const SizedBox(height: 16),
-
-// //                   // Spacer ดันลงไปด้านล่าง ตามดีไซน์
-// //                   const Spacer(),
-
-// //                   // Footer หรือจะใส่ลายน้ำอะไรก็ได้ตามต้องการ
-// //                   // Container(
-// //                   //   alignment: Alignment.center,
-// //                   //   child: Text(
-// //                   //     'Footer',
-// //                   //     style: TextStyle(color: Colors.white38),
-// //                   //   ),
-// //                   // ),
-// //                 ],
-// //               ),
-// //             ),
-// //           ),
-// //         ],
-// //       ),
-// //     );
-// //   }
-// // }
-
 // import 'package:flutter/material.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
@@ -173,12 +26,29 @@
 //     }
 
 //     return Scaffold(
+//       extendBodyBehindAppBar: true,
+//       appBar: AppBar(
+//         backgroundColor: Colors.transparent,
+//         elevation: 0,
+//         leading: IconButton(
+//           icon: const Icon(Icons.arrow_back, color: Colors.white),
+//           onPressed: () => Navigator.pop(context),
+//         ),
+//         title: const Text(
+//           'ประวัติการใช้งาน',
+//           style: TextStyle(
+//             fontSize: 20,
+//             color: Colors.white,
+//             fontWeight: FontWeight.bold,
+//           ),
+//         ),
+//       ),
 //       body: Stack(
 //         children: [
 //           // Background Image
 //           Positioned.fill(
 //             child: Image.asset(
-//               'assets/img/yoga4.png',
+//               'assets/img/yoga3.png',
 //               fit: BoxFit.cover,
 //             ),
 //           ),
@@ -202,179 +72,169 @@
 
 //           // Content
 //           SafeArea(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 // Header
-//                 Padding(
-//                   padding: const EdgeInsets.all(16.0),
-//                   child: Row(
-//                     children: [
-//                       IconButton(
-//                         icon: const Icon(Icons.arrow_back, color: Colors.white),
-//                         onPressed: () => Navigator.pop(context),
-//                       ),
-//                       const Text(
-//                         'ประวัติการเล่นโยคะของคุณ',
+//             child: Padding(
+//               padding: const EdgeInsets.only(
+//                   top: 8.0), // Add some padding below AppBar
+//               child: StreamBuilder<QuerySnapshot>(
+//                 stream: FirebaseFirestore.instance
+//                     .collection('YogaProgramHistory')
+//                     .where('User',
+//                         isEqualTo: FirebaseFirestore.instance
+//                             .doc('Users/${user?.uid}'))
+//                     .orderBy('Date', descending: true)
+//                     .snapshots(),
+//                 builder: (context, snapshot) {
+//                   if (snapshot.hasError) {
+//                     return Center(
+//                       child: Text('Error: ${snapshot.error}',
+//                           style: const TextStyle(color: Colors.white)),
+//                     );
+//                   }
+
+//                   if (snapshot.connectionState == ConnectionState.waiting) {
+//                     return const Center(
+//                       child: CircularProgressIndicator(),
+//                     );
+//                   }
+
+//                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+//                     return const Center(
+//                       child: Text(
+//                         'ยังไม่มีประวัติการเล่นโยคะ',
 //                         style: TextStyle(
-//                           fontSize: 24,
 //                           color: Colors.white,
-//                           fontWeight: FontWeight.bold,
+//                           fontSize: 18,
 //                         ),
 //                       ),
-//                     ],
-//                   ),
-//                 ),
+//                     );
+//                   }
 
-//                 // History List
-//                 Expanded(
-//                   child: StreamBuilder<QuerySnapshot>(
-//                     stream: FirebaseFirestore.instance
-//                         .collection('YogaProgramHistory')
-//                         .where('User',
-//                             isEqualTo: FirebaseFirestore.instance
-//                                 .doc('Users/${user?.uid}'))
-//                         .orderBy('Date', descending: true)
-//                         .snapshots(),
-//                     builder: (context, snapshot) {
-//                       if (snapshot.hasError) {
-//                         return Center(
-//                           child: Text('Error: ${snapshot.error}',
-//                               style: const TextStyle(color: Colors.white)),
-//                         );
-//                       }
+//                   return ListView.builder(
+//                     padding: const EdgeInsets.symmetric(horizontal: 16),
+//                     itemCount: snapshot.data!.docs.length,
+//                     itemBuilder: (context, index) {
+//                       final doc = snapshot.data!.docs[index];
+//                       final data = doc.data() as Map<String, dynamic>;
+//                       final score = data['Ovr_score'] as double? ?? 0.0;
+//                       final date = (data['Date'] as Timestamp).toDate();
+//                       final programRef =
+//                           data['Program_id'] as DocumentReference;
 
-//                       if (snapshot.connectionState == ConnectionState.waiting) {
-//                         return const Center(
-//                           child: CircularProgressIndicator(),
-//                         );
-//                       }
+//                       return FutureBuilder<DocumentSnapshot>(
+//                         future: programRef.get(),
+//                         builder: (context, programSnapshot) {
+//                           if (!programSnapshot.hasData) {
+//                             return const SizedBox();
+//                           }
 
-//                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-//                         return const Center(
-//                           child: Text(
-//                             'ยังไม่มีประวัติการเล่นโยคะ',
-//                             style: TextStyle(
-//                               color: Colors.white,
-//                               fontSize: 18,
-//                             ),
-//                           ),
-//                         );
-//                       }
+//                           final programData = programSnapshot.data!.data()
+//                               as Map<String, dynamic>?;
+//                           final programName =
+//                               programData?['Name'] ?? 'Unknown Program';
+//                           final programImage =
+//                               programData?['Picture'] ?? 'listBG.png';
 
-//                       return ListView.builder(
-//                         padding: const EdgeInsets.symmetric(horizontal: 16),
-//                         itemCount: snapshot.data!.docs.length,
-//                         itemBuilder: (context, index) {
-//                           final doc = snapshot.data!.docs[index];
-//                           final data = doc.data() as Map<String, dynamic>;
-//                           final score = data['Ovr_score'] as double? ?? 0.0;
-//                           final date = (data['Date'] as Timestamp).toDate();
-//                           final programRef =
-//                               data['Program_id'] as DocumentReference;
-
-//                           return FutureBuilder<DocumentSnapshot>(
-//                             future: programRef.get(),
-//                             builder: (context, programSnapshot) {
-//                               if (!programSnapshot.hasData) {
-//                                 return const SizedBox();
-//                               }
-
-//                               final programData = programSnapshot.data!.data()
-//                                   as Map<String, dynamic>?;
-//                               final programName =
-//                                   programData?['Name'] ?? 'Unknown Program';
-//                               final programImage =
-//                                   programData?['Picture'] ?? 'listBG.png';
-
-//                               return Padding(
-//                                 padding: const EdgeInsets.only(bottom: 12),
-//                                 child: GestureDetector(
-//                                   onTap: () {
-//                                     Navigator.push(
-//                                       context,
-//                                       MaterialPageRoute(
-//                                         builder: (context) => PoseResultPage(
-//                                           programId: programRef.id,
-//                                           programHistoryId: doc.id,
-//                                         ),
-//                                       ),
-//                                     );
-//                                   },
-//                                   child: Container(
-//                                     padding: const EdgeInsets.all(16),
-//                                     decoration: BoxDecoration(
-//                                       color: Colors.black.withOpacity(0.4),
-//                                       borderRadius: BorderRadius.circular(12),
+//                           return Padding(
+//                             padding: const EdgeInsets.only(bottom: 12),
+//                             child: GestureDetector(
+//                               onTap: () {
+//                                 Navigator.push(
+//                                   context,
+//                                   MaterialPageRoute(
+//                                     builder: (context) => PoseResultPage(
+//                                       programId: programRef.id,
+//                                       programHistoryId: doc.id,
 //                                     ),
-//                                     child: Row(
-//                                       children: [
-//                                         // Program Image
-//                                         ClipRRect(
-//                                           borderRadius:
-//                                               BorderRadius.circular(8),
-//                                           child: Image.asset(
-//                                             'assets/img/$programImage',
-//                                             width: 80,
-//                                             height: 80,
-//                                             fit: BoxFit.cover,
-//                                           ),
-//                                         ),
-//                                         const SizedBox(width: 16),
+//                                   ),
+//                                 );
+//                               },
+//                               child: Container(
+//                                 padding: const EdgeInsets.all(16),
+//                                 decoration: BoxDecoration(
+//                                   color: Colors.black.withOpacity(0.4),
+//                                   borderRadius: BorderRadius.circular(12),
+//                                   border: Border.all(
+//                                     color: Colors.white.withOpacity(0.1),
+//                                     width: 0.5,
+//                                   ),
+//                                 ),
+//                                 child: Row(
+//                                   children: [
+//                                     // Program Image
+//                                     ClipRRect(
+//                                       borderRadius: BorderRadius.circular(8),
+//                                       child: Image.asset(
+//                                         'assets/img/$programImage',
+//                                         width: 80,
+//                                         height: 80,
+//                                         fit: BoxFit.cover,
+//                                       ),
+//                                     ),
+//                                     const SizedBox(width: 16),
 
-//                                         // Program Details
-//                                         Expanded(
-//                                           child: Column(
-//                                             crossAxisAlignment:
-//                                                 CrossAxisAlignment.start,
+//                                     // Program Details
+//                                     Expanded(
+//                                       child: Column(
+//                                         crossAxisAlignment:
+//                                             CrossAxisAlignment.start,
+//                                         children: [
+//                                           Text(
+//                                             programName,
+//                                             style: const TextStyle(
+//                                               fontSize: 18,
+//                                               color: Colors.white,
+//                                               fontWeight: FontWeight.bold,
+//                                             ),
+//                                           ),
+//                                           const SizedBox(height: 6),
+//                                           Row(
 //                                             children: [
 //                                               Text(
-//                                                 programName,
+//                                                 'คะแนน: ',
 //                                                 style: const TextStyle(
-//                                                   fontSize: 18,
-//                                                   color: Colors.white,
-//                                                   fontWeight: FontWeight.bold,
+//                                                   fontSize: 14,
+//                                                   color: Colors.white70,
 //                                                 ),
 //                                               ),
-//                                               const SizedBox(height: 4),
 //                                               Text(
-//                                                 'คะแนน: ${score.toStringAsFixed(1)}%',
+//                                                 '${score.toStringAsFixed(1)}%',
 //                                                 style: TextStyle(
 //                                                   fontSize: 16,
 //                                                   color: _getScoreColor(score),
 //                                                   fontWeight: FontWeight.w500,
 //                                                 ),
 //                                               ),
-//                                               Text(
-//                                                 'เล่นเมื่อ: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}',
-//                                                 style: const TextStyle(
-//                                                   fontSize: 14,
-//                                                   color: Colors.white70,
-//                                                 ),
-//                                               ),
 //                                             ],
 //                                           ),
-//                                         ),
-
-//                                         // Arrow Icon
-//                                         const Icon(
-//                                           Icons.arrow_forward_ios,
-//                                           color: Colors.white54,
-//                                           size: 16,
-//                                         ),
-//                                       ],
+//                                           const SizedBox(height: 2),
+//                                           Text(
+//                                             'เล่นเมื่อ: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}',
+//                                             style: const TextStyle(
+//                                               fontSize: 14,
+//                                               color: Colors.white70,
+//                                             ),
+//                                           ),
+//                                         ],
+//                                       ),
 //                                     ),
-//                                   ),
+
+//                                     // Arrow Icon
+//                                     const Icon(
+//                                       Icons.arrow_forward_ios,
+//                                       color: Colors.white54,
+//                                       size: 16,
+//                                     ),
+//                                   ],
 //                                 ),
-//                               );
-//                             },
+//                               ),
+//                             ),
 //                           );
 //                         },
 //                       );
 //                     },
-//                   ),
-//                 ),
-//               ],
+//                   );
+//                 },
+//               ),
 //             ),
 //           ),
 //         ],
@@ -384,7 +244,8 @@
 
 //   Color _getScoreColor(double score) {
 //     if (score >= 75) return Colors.green;
-//     if (score >= 50) return Colors.yellow;
+//     if (score >= 50)
+//       return const Color(0xFFFFD700); // ปรับให้เป็นสีเหลืองทองชัดเจนกว่า
 //     if (score >= 25) return Colors.orange;
 //     return Colors.red;
 //   }
@@ -395,6 +256,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../CameraMediapipe/pose_result.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // เพิ่ม import สำหรับ Firebase Storage
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -405,6 +267,21 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final User? user = FirebaseAuth.instance.currentUser;
+
+  // เพิ่มฟังก์ชันสำหรับดึง URL ของรูปภาพจาก Firebase Storage
+  Future<String> _getImageUrl(String imageName) async {
+    try {
+      if (imageName.isEmpty) return '';
+
+      // ใช้ Reference เพื่อชี้ไปที่ไฟล์ในพาธที่ต้องการ
+      final ref = FirebaseStorage.instance.ref().child('Yogapose/$imageName');
+      // ดึง URL สำหรับดาวน์โหลด
+      return await ref.getDownloadURL();
+    } catch (e) {
+      debugPrint("Error getting image URL: $e");
+      return ''; // ส่งค่าว่างกลับไปในกรณีที่มีข้อผิดพลาด
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -437,11 +314,47 @@ class _HistoryPageState extends State<HistoryPage> {
       ),
       body: Stack(
         children: [
-          // Background Image
+          // Background Image - แก้ไขเป็นใช้ FutureBuilder เพื่อโหลดรูปจาก Storage
           Positioned.fill(
-            child: Image.asset(
-              'assets/img/yoga3.png',
-              fit: BoxFit.cover,
+            child: FutureBuilder<String>(
+              future: _getImageUrl(
+                  'yoga3.png'), // เปลี่ยนเป็นชื่อไฟล์ที่ถูกต้องในพาธ Yogapose/
+              builder: (context, urlSnapshot) {
+                if (urlSnapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                      color: Colors.black); // แสดงพื้นหลังสีดำระหว่างรอ
+                }
+                if (!urlSnapshot.hasData || urlSnapshot.data!.isEmpty) {
+                  return Container(
+                    color: Colors.black, // ถ้าไม่มีรูปใช้พื้นหลังสีดำแทน
+                  );
+                }
+                // ใช้ Network Image แทน Asset Image
+                return Image.network(
+                  urlSnapshot.data!,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.black,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color:
+                          Colors.black, // ถ้าโหลดรูปมีปัญหาใช้พื้นหลังสีดำแทน
+                    );
+                  },
+                );
+              },
             ),
           ),
 
@@ -523,8 +436,7 @@ class _HistoryPageState extends State<HistoryPage> {
                               as Map<String, dynamic>?;
                           final programName =
                               programData?['Name'] ?? 'Unknown Program';
-                          final programImage =
-                              programData?['Picture'] ?? 'listBG.png';
+                          final programImage = programData?['Picture'] ?? '';
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
@@ -552,14 +464,80 @@ class _HistoryPageState extends State<HistoryPage> {
                                 ),
                                 child: Row(
                                   children: [
-                                    // Program Image
+                                    // Program Image - แก้ไขเป็นใช้ FutureBuilder เพื่อโหลดรูปจาก Storage
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
-                                      child: Image.asset(
-                                        'assets/img/$programImage',
-                                        width: 80,
-                                        height: 80,
-                                        fit: BoxFit.cover,
+                                      child: FutureBuilder<String>(
+                                        future: _getImageUrl(programImage),
+                                        builder: (context, imageSnapshot) {
+                                          if (imageSnapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return Container(
+                                              width: 80,
+                                              height: 80,
+                                              color: Colors.grey.shade800,
+                                              child: const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                            );
+                                          }
+
+                                          if (!imageSnapshot.hasData ||
+                                              imageSnapshot.data!.isEmpty) {
+                                            return Container(
+                                              width: 80,
+                                              height: 80,
+                                              color: Colors.grey.shade800,
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                                color: Colors.white,
+                                              ),
+                                            );
+                                          }
+
+                                          return Image.network(
+                                            imageSnapshot.data!,
+                                            width: 80,
+                                            height: 80,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child,
+                                                loadingProgress) {
+                                              if (loadingProgress == null)
+                                                return child;
+                                              return Container(
+                                                width: 80,
+                                                height: 80,
+                                                color: Colors.grey.shade800,
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    value: loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            loadingProgress
+                                                                .expectedTotalBytes!
+                                                        : null,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Container(
+                                                width: 80,
+                                                height: 80,
+                                                color: Colors.grey.shade800,
+                                                child: const Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.white,
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
                                       ),
                                     ),
                                     const SizedBox(width: 16),
@@ -581,9 +559,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                           const SizedBox(height: 6),
                                           Row(
                                             children: [
-                                              Text(
+                                              const Text(
                                                 'คะแนน: ',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 14,
                                                   color: Colors.white70,
                                                 ),

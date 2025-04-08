@@ -75,13 +75,13 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF1E1E1E), // เปลี่ยนพื้นหลังเป็นดำเข้ม
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.5),
               spreadRadius: 2,
-              blurRadius: 10,
+              blurRadius: 12,
               offset: const Offset(0, 5),
             ),
           ],
@@ -89,18 +89,17 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Success checkmark animation
             ScaleTransition(
               scale: _scaleAnimation,
               child: Container(
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50),
+                  color: const Color(0xFFFF7043), // เปลี่ยนเป็น accent ของแอป
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4CAF50).withOpacity(0.3),
+                      color: const Color(0xFFFF7043).withOpacity(0.3),
                       spreadRadius: 2,
                       blurRadius: 10,
                       offset: const Offset(0, 3),
@@ -116,7 +115,7 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
             ),
             const SizedBox(height: 24),
 
-            // Welcome text
+            // ข้อความต้อนรับ
             FadeTransition(
               opacity: _opacityAnimation,
               child: Column(
@@ -126,7 +125,7 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF333333),
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -134,7 +133,7 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
                     'เข้าสู่ระบบสำเร็จ!',
                     style: TextStyle(
                       fontSize: 18,
-                      color: Color(0xFF666666),
+                      color: Colors.white70,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -142,7 +141,7 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
                     'ยินดีต้อนรับกลับมาสู่ REGA',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Color(0xFF888888),
+                      color: Colors.white54,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -151,7 +150,7 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
             ),
             const SizedBox(height: 32),
 
-            // Continue button with animation
+            // ปุ่ม
             AnimatedOpacity(
               opacity: _showContinueButton ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 500),
@@ -159,7 +158,7 @@ class _LoginSuccessWidgetState extends State<LoginSuccessWidget>
                   ? ElevatedButton(
                       onPressed: widget.onContinue,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4CAF50),
+                        backgroundColor: const Color(0xFFFF7043),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 32, vertical: 12),
@@ -211,7 +210,7 @@ class _SuccessScreenState extends State<SuccessScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black87,
       body: Stack(
         children: [
           // Background particles
@@ -300,9 +299,7 @@ class Particle {
     // Green color palette with varying opacity
     final opacity = 0.2 + random.nextDouble() * 0.3;
     color = Color.fromRGBO(
-      76,
-      175 + random.nextInt(80),
-      80 + random.nextInt(100),
+      255, 112 + random.nextInt(30), 67, // ส้มแดง
       opacity,
     );
 

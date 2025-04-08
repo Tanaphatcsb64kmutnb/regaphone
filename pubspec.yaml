@@ -48,19 +48,20 @@ dependencies:
   permission_handler: ^11.0.1
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^10.1.0
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1  
-  cloud_firestore: ^5.4.4 
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3  
+  cloud_firestore: ^4.13.6 
   intl: ^0.17.0
   timeago: ^3.3.0
-  firebase_messaging: ^15.2.1
-  cloud_functions: ^5.3.1
+  firebase_messaging: ^14.7.9
+  cloud_functions: ^4.5.8
   connectivity_plus: ^6.1.2
   flutter_local_notifications: ^18.0.1
   shared_preferences: ^2.5.1
   flutter_dotenv: ^5.2.1
   google_fonts: ^4.0.4
-  google_sign_in: ^6.1.5  # หรือเวอร์ชันล่าสุด
+  google_sign_in: ^6.1.5  # หรือเวอร์ชันล่าสุด 
+  firebase_storage: ^11.2.6
   
   
 

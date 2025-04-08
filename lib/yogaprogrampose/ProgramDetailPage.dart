@@ -1,6 +1,7 @@
 // import 'package:flutter/material.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'YogaDetailPage.dart'; // สำหรับแสดงท่าที่อยู่ในโปรแกรมนั้น
+// import 'package:firebase_auth/firebase_auth.dart'; // เพิ่ม import นี้
 
 // class ProgramDetailPage extends StatelessWidget {
 //   final String programId;
@@ -10,6 +11,8 @@
 
 //   @override
 //   Widget build(BuildContext context) {
+//     final currentUser = FirebaseAuth.instance.currentUser;
+
 //     return Scaffold(
 //       body: FutureBuilder<DocumentSnapshot>(
 //         future: FirebaseFirestore.instance
@@ -33,15 +36,34 @@
 //           final programName = programData['Name'] ?? 'No Name';
 //           final programDescription =
 //               programData['Description'] ?? 'No Description';
+//           final pictureFileName =
+//               programData['Picture'] ?? ''; // ดึงชื่อไฟล์รูปจาก field Picture
 
 //           return Stack(
 //             children: [
-//               // พื้นหลัง
+//               // พื้นหลัง (ใช้รูปจาก assets ตามชื่อไฟล์ที่ดึงมา)
 //               Positioned.fill(
-//                 child: Image.asset(
-//                   'assets/img/listBG.png', // Path รูปพื้นหลัง
-//                   fit: BoxFit.cover,
-//                 ),
+//                 child: pictureFileName.isNotEmpty
+//                     ? Image.asset(
+//                         'assets/img/$pictureFileName', // ใช้ชื่อไฟล์จาก field Picture
+//                         fit: BoxFit.cover,
+//                         errorBuilder: (context, error, stackTrace) {
+//                           return const Center(
+//                             child: Icon(
+//                               Icons.broken_image,
+//                               color: Colors.white,
+//                               size: 48,
+//                             ),
+//                           );
+//                         },
+//                       )
+//                     : const Center(
+//                         child: Icon(
+//                           Icons.broken_image,
+//                           color: Colors.white,
+//                           size: 48,
+//                         ),
+//                       ),
 //               ),
 //               // ชั้นสีดำโปร่งใส
 //               Positioned.fill(
@@ -83,7 +105,8 @@
 //                               context,
 //                               MaterialPageRoute(
 //                                 builder: (context) => YogaDetailPage(
-//                                   programId: programId, // ส่ง ID ของโปรแกรม
+//                                   programId: programId,
+//                                   userId: currentUser?.uid ?? '',
 //                                 ),
 //                               ),
 //                             );
@@ -128,14 +151,30 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'YogaDetailPage.dart'; // สำหรับแสดงท่าที่อยู่ในโปรแกรมนั้น
-import 'package:firebase_auth/firebase_auth.dart'; // เพิ่ม import นี้
+import 'YogaDetailPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // เพิ่ม import สำหรับ Firebase Storage
 
 class ProgramDetailPage extends StatelessWidget {
   final String programId;
 
   const ProgramDetailPage({Key? key, required this.programId})
       : super(key: key);
+
+  // เพิ่มฟังก์ชันสำหรับดึง URL ของรูปภาพจาก Firebase Storage
+  Future<String> _getImageUrl(String imageName) async {
+    try {
+      if (imageName.isEmpty) return '';
+
+      // ใช้ Reference เพื่อชี้ไปที่ไฟล์ในพาธที่ต้องการ
+      final ref = FirebaseStorage.instance.ref().child('Yogapose/$imageName');
+      // ดึง URL สำหรับดาวน์โหลด
+      return await ref.getDownloadURL();
+    } catch (e) {
+      debugPrint("Error getting image URL: $e");
+      return ''; // ส่งค่าว่างกลับไปในกรณีที่มีข้อผิดพลาด
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,34 +203,55 @@ class ProgramDetailPage extends StatelessWidget {
           final programName = programData['Name'] ?? 'No Name';
           final programDescription =
               programData['Description'] ?? 'No Description';
-          final pictureFileName =
-              programData['Picture'] ?? ''; // ดึงชื่อไฟล์รูปจาก field Picture
+          final pictureFileName = programData['Picture'] ?? '';
 
           return Stack(
             children: [
-              // พื้นหลัง (ใช้รูปจาก assets ตามชื่อไฟล์ที่ดึงมา)
+              // พื้นหลัง - แก้ไขเป็นใช้ FutureBuilder เพื่อโหลดรูปจาก Storage
               Positioned.fill(
-                child: pictureFileName.isNotEmpty
-                    ? Image.asset(
-                        'assets/img/$pictureFileName', // ใช้ชื่อไฟล์จาก field Picture
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(
-                              Icons.broken_image,
-                              color: Colors.white,
-                              size: 48,
-                            ),
-                          );
-                        },
-                      )
-                    : const Center(
+                child: FutureBuilder<String>(
+                  future: _getImageUrl(pictureFileName),
+                  builder: (context, urlSnapshot) {
+                    if (urlSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!urlSnapshot.hasData || urlSnapshot.data!.isEmpty) {
+                      return const Center(
                         child: Icon(
                           Icons.broken_image,
                           color: Colors.white,
                           size: 48,
                         ),
-                      ),
+                      );
+                    }
+                    // ใช้ Network Image แทน Asset Image
+                    return Image.network(
+                      urlSnapshot.data!,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
               // ชั้นสีดำโปร่งใส
               Positioned.fill(
