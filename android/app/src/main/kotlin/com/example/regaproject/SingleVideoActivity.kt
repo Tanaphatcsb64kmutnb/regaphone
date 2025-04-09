@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.util.Log
 import android.widget.MediaController
+import java.io.File
 
 class SingleVideoActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,36 +45,60 @@ class SingleVideoActivity : Activity() {
         layout.addView(videoView)
         setContentView(layout)
 
-        // รับชื่อไฟล์วิดีโอจาก intent
-        val videoFileName = intent.getStringExtra("videoFileName") ?: "rest_video"
+        // เพิ่ม Media Controller สำหรับควบคุมการเล่นวิดีโอ
+        val mediaController = MediaController(this)
+        mediaController.setAnchorView(videoView)
+        videoView.setMediaController(mediaController)
+
+        // ดูว่าเรารับ path จาก local storage หรือไม่
+        val videoPath = intent.getStringExtra("videoPath")
         
-        // ตัดนามสกุลไฟล์ออกถ้ามี
-        val bareFileName = if (videoFileName.contains(".")) {
-            videoFileName.substring(0, videoFileName.lastIndexOf("."))
+        if (videoPath != null && videoPath.isNotEmpty()) {
+            // กรณีเล่นจาก local storage path
+            Log.d("SingleVideoActivity", "Attempting to play video from path: $videoPath")
+            try {
+                val file = File(videoPath)
+                if (file.exists()) {
+                    val uri = Uri.fromFile(file)
+                    videoView.setVideoURI(uri)
+                    Log.d("SingleVideoActivity", "Video file exists at: $videoPath")
+                } else {
+                    Log.e("SingleVideoActivity", "Video file does not exist: $videoPath")
+                    finish()
+                    return
+                }
+            } catch (e: Exception) {
+                Log.e("SingleVideoActivity", "Error setting video from path: ${e.message}")
+                finish()
+                return
+            }
         } else {
-            videoFileName
-        }
-        
-        Log.d("SingleVideoActivity", "Attempting to play video: $bareFileName")
-        
-        // ดึง resource ID จากชื่อไฟล์
-        val resourceId = resources.getIdentifier(bareFileName, "raw", packageName)
-        
-        if (resourceId != 0) {
-            // พบไฟล์ในโฟลเดอร์ raw
-            Log.d("SingleVideoActivity", "Found video resource with id: $resourceId")
-            val videoUri = Uri.parse("android.resource://${packageName}/raw/${bareFileName}")
-            videoView.setVideoURI(videoUri)
+            // กรณีเล่นจาก raw resources (แบบเดิม)
+            val videoFileName = intent.getStringExtra("videoFileName") ?: "rest_video"
             
-            // เพิ่ม Media Controller สำหรับควบคุมการเล่นวิดีโอ
-            val mediaController = MediaController(this)
-            mediaController.setAnchorView(videoView)
-            videoView.setMediaController(mediaController)
-        } else {
-            // ไม่พบไฟล์ แจ้งข้อผิดพลาด
-            Log.e("SingleVideoActivity", "Video resource not found: $bareFileName")
-            finish() // ปิดกิจกรรมถ้าไม่พบไฟล์
-            return
+            // ตัดนามสกุลไฟล์ออกถ้ามี
+            val bareFileName = if (videoFileName.contains(".")) {
+                videoFileName.substring(0, videoFileName.lastIndexOf("."))
+            } else {
+                videoFileName
+            }
+            
+            Log.d("SingleVideoActivity", "Attempting to play video from raw: $bareFileName")
+            
+            // ดึง resource ID จากชื่อไฟล์
+            val resourceId = resources.getIdentifier(bareFileName, "raw", packageName)
+            
+            if (resourceId != 0) {
+                // พบไฟล์ในโฟลเดอร์ raw
+                Log.d("SingleVideoActivity", "Found video resource with id: $resourceId")
+                val videoUri = Uri.parse("android.resource://${packageName}/raw/${bareFileName}")
+                videoView.setVideoURI(videoUri)
+            } else {
+                // ไม่พบไฟล์ แจ้งข้อผิดพลาด
+                Log.e("SingleVideoActivity", "Video resource not found: $bareFileName")
+                finish() // ปิดกิจกรรมถ้าไม่พบไฟล์
+                return
+            }
         }
 
         // Set video scaling

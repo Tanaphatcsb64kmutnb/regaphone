@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'PoseDetailPage.dart';
 import '../CameraMediapipe/cameramediapipe.dart';
 import '../CameraMediapipe/countdownPage.dart';
+import '../widgets/local_image.dart';
 
 class YogaDetailPage extends StatefulWidget {
-  // Changed to StatefulWidget
   final String programId;
-  final String userId; // Added userId parameter
+  final String userId;
 
   const YogaDetailPage({
     Key? key,
@@ -95,20 +95,13 @@ class _YogaDetailPageState extends State<YogaDetailPage> {
 
           return Stack(
             children: [
+              // ใช้ LocalImage แทน Image.asset
               Positioned.fill(
                 child: backgroundFileName.isNotEmpty
-                    ? Image.asset(
-                        'assets/img/$backgroundFileName',
+                    ? LocalImage(
+                        fileName: backgroundFileName,
+                        assetFallback: 'assets/img/$backgroundFileName',
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(
-                              Icons.broken_image,
-                              color: Colors.white,
-                              size: 48,
-                            ),
-                          );
-                        },
                       )
                     : const Center(
                         child: Icon(
@@ -239,6 +232,8 @@ class _YogaDetailPageState extends State<YogaDetailPage> {
                             itemCount: yogaPoses.length,
                             itemBuilder: (context, index) {
                               final yogaPose = yogaPoses[index];
+                              final posePicture = yogaPose['Picture'] ?? '';
+
                               return GestureDetector(
                                 onTap: () {
                                   Navigator.push(
@@ -252,8 +247,10 @@ class _YogaDetailPageState extends State<YogaDetailPage> {
                                 },
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
-                                  child: Image.asset(
-                                    'assets/img/${yogaPose['Picture']}',
+                                  // ใช้ LocalImage แทน Image.asset
+                                  child: LocalImage(
+                                    fileName: posePicture,
+                                    assetFallback: 'assets/img/$posePicture',
                                     fit: BoxFit.cover,
                                   ),
                                 ),

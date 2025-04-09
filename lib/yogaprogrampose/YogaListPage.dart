@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // เพิ่ม import นี้
+import 'package:firebase_auth/firebase_auth.dart';
 import './ProgramDetailPage.dart';
+import '../widgets/local_image.dart';
 
 class YogaListPage extends StatelessWidget {
   const YogaListPage({Key? key}) : super(key: key);
@@ -13,10 +14,11 @@ class YogaListPage extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // พื้นหลังรูป listBG.png
+          // พื้นหลังรูป listBG.png (ใช้ LocalImage แทน Image.asset)
           Positioned.fill(
-            child: Image.asset(
-              'assets/img/listBG.png', // Path ของรูป listBG.png
+            child: LocalImage(
+              fileName: 'listBG.png',
+              assetFallback: 'assets/img/listBG.png',
               fit: BoxFit.cover,
             ),
           ),
@@ -73,8 +75,7 @@ class YogaListPage extends StatelessWidget {
                         itemCount: yogaPrograms.length,
                         itemBuilder: (context, index) {
                           final yogaProgram = yogaPrograms[index];
-                          final pictureFileName = yogaProgram['Picture'] ??
-                              ''; // ชื่อไฟล์รูปภาพจาก field Picture
+                          final pictureFileName = yogaProgram['Picture'] ?? '';
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
@@ -91,12 +92,14 @@ class YogaListPage extends StatelessWidget {
                             ),
                             child: Stack(
                               children: [
-                                // รูปภาพของรายการ
+                                // รูปภาพของรายการ (ใช้ LocalImage แทน Image.asset)
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
                                   child: pictureFileName.isNotEmpty
-                                      ? Image.asset(
-                                          'assets/img/$pictureFileName', // ใช้ชื่อไฟล์รูปภาพ
+                                      ? LocalImage(
+                                          fileName: pictureFileName,
+                                          assetFallback:
+                                              'assets/img/$pictureFileName',
                                           width: double.infinity,
                                           height: 180,
                                           fit: BoxFit.cover,
