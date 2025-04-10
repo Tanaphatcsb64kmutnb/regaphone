@@ -34,6 +34,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+    
   
 
     
@@ -44,14 +45,29 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   http: ^0.13.5
   camera: ^0.10.0+1 # ตรวจสอบให้แน่ใจว่าเวอร์ชันถูกต้อง (สามารถเปลี่ยนเป็นเวอร์ชันล่าสุดได้)
-  permission_handler: ^10.2.0
+  permission_handler: ^11.0.1
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^10.1.0
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1  
-  cloud_firestore: ^5.4.4 
-
+  firebase_core: ^3.13.0
+  firebase_auth: ^5.5.2  
+  cloud_firestore: ^5.6.6
+  intl: ^0.17.0
+  timeago: ^3.3.0
+  firebase_messaging: ^15.2.5
+  cloud_functions: ^5.4.0
+  connectivity_plus: ^6.1.2
+  flutter_local_notifications: ^18.0.1
+  shared_preferences: ^2.5.1
+  flutter_dotenv: ^5.2.1
+  google_fonts: ^4.0.4
+  google_sign_in: ^6.3.0  # หรือเวอร์ชันล่าสุด
+  firebase_storage: ^12.4.5
+  cached_network_image: ^3.3.1
+  path_provider: ^2.0.15
+  flutter_cache_manager: ^3.3.1
+  
 dev_dependencies:
+
   flutter_test:
     sdk: flutter
     
@@ -62,9 +78,15 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+flutter_launcher_icons:
+      android: true
+      ios: true
+      image_path: "assets/icon/logorega.png"
+      
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -81,27 +103,88 @@ flutter:
     - assets/img/yoga2.png
     - assets/img/yoga3.png
     - assets/img/yoga4.png
+    - assets/img/sex1.png
     - assets/img/yoga_pose1.png
     - assets/img/yoga_pose2.png
     - assets/img/yoga_pose3.png
     - assets/pose_landmarker_heavy.task
     - assets/pose_landmarker_full.task
     - assets/pose_landmarker_lite.task
-    - assets/img/officesyndrome.jpg
-    - assets/img/butterfly.png
-    - assets/img/Child.png
-    - assets/img/Savasana.png
-    - assets/img/Paschimottanasana.png
-    - assets/img/Sukhasana.png
+    - assets/img/officesyndrome.png
     - assets/img/bloodpressure.png
     - assets/img/heartdisease.png
     - assets/img/Armpain.png
     - assets/img/Backpain.png
     - assets/img/LegPain.png
-    - assets/img/NeckPain.png
+    - assets/img/NeckPain.png 
+    - assets/img/kneepain.png
+    - assets/img/headache.png
+    - assets/img/allergylung.png
+    - assets/img/constipation.png
+    - assets/img/everyyoga.png
+    - assets/img/plantarfasciitis.png
+    - assets/img/Stress.png
+    - assets/img/migraine.png
+    - assets/img/GERD.png
+    - assets/img/Diabetes.png
+    - assets/img/Afterworkout.png
+    - assets/img/hippain.png
+    - assets/img/shouderpain.png
+    - assets/img/Beforeworkout.png
+    - assets/img/assistedsidebendpose.jpg
+    - assets/img/bigtoepose.jpg
+    - assets/img/birddogpose.jpg
+    - assets/img/boatpose.jpg
+    - assets/img/bowpose.jpg
+    - assets/img/bridgepose.jpg
+    - assets/img/butterflypose.jpg
+    - assets/img/cactuspose.jpg
+    - assets/img/camelpose.jpg
+    - assets/img/catcow.jpg
+    - assets/img/chairtwistpose.jpg
+    - assets/img/cobrapose.jpg
+    - assets/img/corpsepose.jpg
+    - assets/img/crescentpose.jpg
+    - assets/img/dancerpose.jpg
+    - assets/img/easypose.jpg
+    - assets/img/extendedsideanglepose.jpg
+    - assets/img/gatepose.jpg
+    - assets/img/goddesspose.jpg
+    - assets/img/halffwbend.jpg
+    - assets/img/HalfLordoftheFishespose.jpg
+    - assets/img/halfmoonpose.jpg
+    - assets/img/halfsplitpose.jpg
+    - assets/img/headtokneefwbend.jpg
+    - assets/img/heropose.jpg
+    - assets/img/lizardpose.jpg
+    - assets/img/lowlungepose.jpg
+    - assets/img/lungingcalfstrecthpose.jpg
+    - assets/img/moutainpose.jpg
+    - assets/img/plowpose.jpg
+    - assets/img/pyramidpose.jpg
+    - assets/img/reversewarriorpose.jpg
+    - assets/img/revolvedheadtokneepose.jpg
+    - assets/img/revolvedsideanglepose.jpg
+    - assets/img/revolvedtrianglepose.jpg
+    - assets/img/salutationsealpose.jpg
+    - assets/img/sideneckstresspose.jpg
+    - assets/img/sideplankpose.jpg
+    - assets/img/sidereclinlingpose.jpg
+    - assets/img/standingbentovercalfpose.jpg
+    - assets/img/standingbowpose.jpg
+    - assets/img/standingfigurepose.jpg
+    - assets/img/standingquadpose.jpg
+    - assets/img/thechairpose.jpg
+    - assets/img/treepose.jpg
+    - assets/img/trianglepose.jpg
+    - assets/img/upwardsalute.jpg
+    - assets/img/upwardsalutsidepose.jpg
+    - assets/img/warriori.jpg
+    - assets/img/warriorii.jpg
+    - assets/img/warrioriii.jpg
+    - assets/img/StandingSpinalTwistPose.jpg
 
-
-
+    
 
   # To add assets to your application, add an assets section, like this:
   # assets:
