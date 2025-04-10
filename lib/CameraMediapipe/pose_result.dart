@@ -2,7 +2,8 @@
 // import 'package:flutter/material.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:intl/intl.dart';
-// import '../Home/Home.dart'; // เพิ่ม import หน้า Home
+// import '../Home/Home.dart';
+// import 'package:firebase_storage/firebase_storage.dart'; // เพิ่ม import สำหรับ Firebase Storage
 
 // class PoseResultPage extends StatelessWidget {
 //   final String programId;
@@ -13,6 +14,21 @@
 //     required this.programId,
 //     required this.programHistoryId,
 //   }) : super(key: key);
+
+//   // เพิ่มฟังก์ชันสำหรับดึง URL ของรูปภาพจาก Firebase Storage
+//   Future<String> _getImageUrl(String imageName) async {
+//     try {
+//       if (imageName.isEmpty) return '';
+
+//       // ใช้ Reference เพื่อชี้ไปที่ไฟล์ในพาธที่ต้องการ
+//       final ref = FirebaseStorage.instance.ref().child('Yogapose/$imageName');
+//       // ดึง URL สำหรับดาวน์โหลด
+//       return await ref.getDownloadURL();
+//     } catch (e) {
+//       debugPrint("Error getting image URL: $e");
+//       return ''; // ส่งค่าว่างกลับไปในกรณีที่มีข้อผิดพลาด
+//     }
+//   }
 
 //   @override
 //   Widget build(BuildContext context) {
@@ -183,112 +199,247 @@
 //                                   poseData['Name'] ?? 'Unknown Pose';
 //                               final poseImage = poseData['Picture'] ?? '';
 
-//                               return Container(
-//                                 decoration: BoxDecoration(
-//                                   borderRadius: BorderRadius.circular(20),
-//                                   image: DecorationImage(
-//                                     image: AssetImage('assets/img/$poseImage'),
-//                                     fit: BoxFit.cover,
-//                                   ),
-//                                 ),
-//                                 child: Container(
-//                                   decoration: BoxDecoration(
-//                                     borderRadius: BorderRadius.circular(20),
-//                                     gradient: LinearGradient(
-//                                       begin: Alignment.topCenter,
-//                                       end: Alignment.bottomCenter,
-//                                       colors: [
-//                                         _getScoreColor(score).withOpacity(0.8),
-//                                         _getScoreColor(score).withOpacity(0.3),
-//                                       ],
+//                               // ใช้ FutureBuilder เพื่อโหลดรูปภาพ
+//                               return FutureBuilder<String>(
+//                                 future: _getImageUrl(poseImage),
+//                                 builder: (context, imageSnapshot) {
+//                                   if (imageSnapshot.connectionState ==
+//                                       ConnectionState.waiting) {
+//                                     // แสดง placeholder ระหว่างรอโหลดรูปภาพ
+//                                     return Container(
+//                                       decoration: BoxDecoration(
+//                                         color: Colors.grey.shade800,
+//                                         borderRadius: BorderRadius.circular(20),
+//                                       ),
+//                                       child: const Center(
+//                                         child: CircularProgressIndicator(),
+//                                       ),
+//                                     );
+//                                   }
+
+//                                   // ตรวจสอบถ้าไม่มีรูปหรือ URL ว่าง
+//                                   if (!imageSnapshot.hasData ||
+//                                       imageSnapshot.data!.isEmpty) {
+//                                     return Container(
+//                                       decoration: BoxDecoration(
+//                                         color: Colors.grey.shade800,
+//                                         borderRadius: BorderRadius.circular(20),
+//                                       ),
+//                                       child: Stack(
+//                                         children: [
+//                                           // Error Placeholder
+//                                           const Center(
+//                                             child: Icon(
+//                                               Icons.broken_image,
+//                                               color: Colors.white,
+//                                               size: 48,
+//                                             ),
+//                                           ),
+
+//                                           // Score Display
+//                                           Positioned(
+//                                             right: 10,
+//                                             top: 10,
+//                                             child: Container(
+//                                               padding:
+//                                                   const EdgeInsets.symmetric(
+//                                                 horizontal: 12,
+//                                                 vertical: 6,
+//                                               ),
+//                                               decoration: BoxDecoration(
+//                                                 color: Colors.black
+//                                                     .withOpacity(0.6),
+//                                                 borderRadius:
+//                                                     BorderRadius.circular(15),
+//                                               ),
+//                                               child: Text(
+//                                                 '${score.round()}%',
+//                                                 style: const TextStyle(
+//                                                   color: Colors.white,
+//                                                   fontSize: 18,
+//                                                   fontWeight: FontWeight.bold,
+//                                                 ),
+//                                               ),
+//                                             ),
+//                                           ),
+
+//                                           // Performance Level
+//                                           Positioned(
+//                                             left: 10,
+//                                             top: 10,
+//                                             child: Container(
+//                                               padding:
+//                                                   const EdgeInsets.symmetric(
+//                                                 horizontal: 12,
+//                                                 vertical: 6,
+//                                               ),
+//                                               decoration: BoxDecoration(
+//                                                 color: Colors.black
+//                                                     .withOpacity(0.6),
+//                                                 borderRadius:
+//                                                     BorderRadius.circular(15),
+//                                               ),
+//                                               child: Text(
+//                                                 _getPerformanceText(score),
+//                                                 style: TextStyle(
+//                                                   color: _getScoreColor(score),
+//                                                   fontSize: 12,
+//                                                   fontWeight: FontWeight.bold,
+//                                                 ),
+//                                               ),
+//                                             ),
+//                                           ),
+
+//                                           // Pose Name
+//                                           Positioned(
+//                                             left: 10,
+//                                             right: 10,
+//                                             bottom: 10,
+//                                             child: Container(
+//                                               padding:
+//                                                   const EdgeInsets.symmetric(
+//                                                 horizontal: 12,
+//                                                 vertical: 6,
+//                                               ),
+//                                               decoration: BoxDecoration(
+//                                                 color: Colors.black
+//                                                     .withOpacity(0.6),
+//                                                 borderRadius:
+//                                                     BorderRadius.circular(15),
+//                                               ),
+//                                               child: Text(
+//                                                 poseName,
+//                                                 style: const TextStyle(
+//                                                   color: Colors.white,
+//                                                   fontSize: 14,
+//                                                   fontWeight: FontWeight.w500,
+//                                                 ),
+//                                                 maxLines: 1,
+//                                                 overflow: TextOverflow.ellipsis,
+//                                                 textAlign: TextAlign.center,
+//                                               ),
+//                                             ),
+//                                           ),
+//                                         ],
+//                                       ),
+//                                     );
+//                                   }
+
+//                                   // แสดงรูปภาพจาก URL ที่ได้จาก Firebase Storage
+//                                   return Container(
+//                                     decoration: BoxDecoration(
+//                                       borderRadius: BorderRadius.circular(20),
+//                                       image: DecorationImage(
+//                                         image:
+//                                             NetworkImage(imageSnapshot.data!),
+//                                         fit: BoxFit.cover,
+//                                       ),
 //                                     ),
-//                                   ),
-//                                   child: Stack(
-//                                     children: [
-//                                       // Score Display
-//                                       Positioned(
-//                                         right: 10,
-//                                         top: 10,
-//                                         child: Container(
-//                                           padding: const EdgeInsets.symmetric(
-//                                             horizontal: 12,
-//                                             vertical: 6,
-//                                           ),
-//                                           decoration: BoxDecoration(
-//                                             color:
-//                                                 Colors.black.withOpacity(0.6),
-//                                             borderRadius:
-//                                                 BorderRadius.circular(15),
-//                                           ),
-//                                           child: Text(
-//                                             '${score.round()}%',
-//                                             style: const TextStyle(
-//                                               color: Colors.white,
-//                                               fontSize: 18,
-//                                               fontWeight: FontWeight.bold,
-//                                             ),
-//                                           ),
+//                                     child: Container(
+//                                       decoration: BoxDecoration(
+//                                         borderRadius: BorderRadius.circular(20),
+//                                         gradient: LinearGradient(
+//                                           begin: Alignment.topCenter,
+//                                           end: Alignment.bottomCenter,
+//                                           colors: [
+//                                             _getScoreColor(score)
+//                                                 .withOpacity(0.8),
+//                                             _getScoreColor(score)
+//                                                 .withOpacity(0.3),
+//                                           ],
 //                                         ),
 //                                       ),
+//                                       child: Stack(
+//                                         children: [
+//                                           // Score Display
+//                                           Positioned(
+//                                             right: 10,
+//                                             top: 10,
+//                                             child: Container(
+//                                               padding:
+//                                                   const EdgeInsets.symmetric(
+//                                                 horizontal: 12,
+//                                                 vertical: 6,
+//                                               ),
+//                                               decoration: BoxDecoration(
+//                                                 color: Colors.black
+//                                                     .withOpacity(0.6),
+//                                                 borderRadius:
+//                                                     BorderRadius.circular(15),
+//                                               ),
+//                                               child: Text(
+//                                                 '${score.round()}%',
+//                                                 style: const TextStyle(
+//                                                   color: Colors.white,
+//                                                   fontSize: 18,
+//                                                   fontWeight: FontWeight.bold,
+//                                                 ),
+//                                               ),
+//                                             ),
+//                                           ),
 
-//                                       // Performance Level
-//                                       Positioned(
-//                                         left: 10,
-//                                         top: 10,
-//                                         child: Container(
-//                                           padding: const EdgeInsets.symmetric(
-//                                             horizontal: 12,
-//                                             vertical: 6,
-//                                           ),
-//                                           decoration: BoxDecoration(
-//                                             color:
-//                                                 Colors.black.withOpacity(0.6),
-//                                             borderRadius:
-//                                                 BorderRadius.circular(15),
-//                                           ),
-//                                           child: Text(
-//                                             _getPerformanceText(score),
-//                                             style: TextStyle(
-//                                               color: _getScoreColor(score),
-//                                               fontSize: 12,
-//                                               fontWeight: FontWeight.bold,
+//                                           // Performance Level
+//                                           Positioned(
+//                                             left: 10,
+//                                             top: 10,
+//                                             child: Container(
+//                                               padding:
+//                                                   const EdgeInsets.symmetric(
+//                                                 horizontal: 12,
+//                                                 vertical: 6,
+//                                               ),
+//                                               decoration: BoxDecoration(
+//                                                 color: Colors.black
+//                                                     .withOpacity(0.6),
+//                                                 borderRadius:
+//                                                     BorderRadius.circular(15),
+//                                               ),
+//                                               child: Text(
+//                                                 _getPerformanceText(score),
+//                                                 style: TextStyle(
+//                                                   color: _getScoreColor(score),
+//                                                   fontSize: 12,
+//                                                   fontWeight: FontWeight.bold,
+//                                                 ),
+//                                               ),
 //                                             ),
 //                                           ),
-//                                         ),
-//                                       ),
 
-//                                       // Pose Name
-//                                       Positioned(
-//                                         left: 10,
-//                                         right: 10,
-//                                         bottom: 10,
-//                                         child: Container(
-//                                           padding: const EdgeInsets.symmetric(
-//                                             horizontal: 12,
-//                                             vertical: 6,
-//                                           ),
-//                                           decoration: BoxDecoration(
-//                                             color:
-//                                                 Colors.black.withOpacity(0.6),
-//                                             borderRadius:
-//                                                 BorderRadius.circular(15),
-//                                           ),
-//                                           child: Text(
-//                                             poseName,
-//                                             style: const TextStyle(
-//                                               color: Colors.white,
-//                                               fontSize: 14,
-//                                               fontWeight: FontWeight.w500,
+//                                           // Pose Name
+//                                           Positioned(
+//                                             left: 10,
+//                                             right: 10,
+//                                             bottom: 10,
+//                                             child: Container(
+//                                               padding:
+//                                                   const EdgeInsets.symmetric(
+//                                                 horizontal: 12,
+//                                                 vertical: 6,
+//                                               ),
+//                                               decoration: BoxDecoration(
+//                                                 color: Colors.black
+//                                                     .withOpacity(0.6),
+//                                                 borderRadius:
+//                                                     BorderRadius.circular(15),
+//                                               ),
+//                                               child: Text(
+//                                                 poseName,
+//                                                 style: const TextStyle(
+//                                                   color: Colors.white,
+//                                                   fontSize: 14,
+//                                                   fontWeight: FontWeight.w500,
+//                                                 ),
+//                                                 maxLines: 1,
+//                                                 overflow: TextOverflow.ellipsis,
+//                                                 textAlign: TextAlign.center,
+//                                               ),
 //                                             ),
-//                                             maxLines: 1,
-//                                             overflow: TextOverflow.ellipsis,
-//                                             textAlign: TextAlign.center,
 //                                           ),
-//                                         ),
+//                                         ],
 //                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
+//                                     ),
+//                                   );
+//                                 },
 //                               );
 //                             },
 //                           );
@@ -358,7 +509,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../Home/Home.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // เพิ่ม import สำหรับ Firebase Storage
+import 'package:firebase_storage/firebase_storage.dart';
+// import 'package:cached_network_image/cached_network_image'; // เพิ่ม import สำหรับ CachedNetworkImage
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PoseResultPage extends StatelessWidget {
   final String programId;
@@ -680,118 +833,145 @@ class PoseResultPage extends StatelessWidget {
                                     );
                                   }
 
-                                  // แสดงรูปภาพจาก URL ที่ได้จาก Firebase Storage
+                                  // แก้ไขส่วนนี้ให้ใช้ CachedNetworkImage แทน NetworkImage
                                   return Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(20),
-                                      image: DecorationImage(
-                                        image:
-                                            NetworkImage(imageSnapshot.data!),
-                                        fit: BoxFit.cover,
-                                      ),
                                     ),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(20),
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            _getScoreColor(score)
-                                                .withOpacity(0.8),
-                                            _getScoreColor(score)
-                                                .withOpacity(0.3),
-                                          ],
+                                    child: Stack(
+                                      children: [
+                                        // ใช้ CachedNetworkImage
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          child: CachedNetworkImage(
+                                            imageUrl: imageSnapshot.data!,
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                            height: double.infinity,
+                                            placeholder: (context, url) =>
+                                                Container(
+                                              color: Colors.grey.shade800,
+                                              child: const Center(
+                                                child:
+                                                    CircularProgressIndicator(),
+                                              ),
+                                            ),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    Container(
+                                              color: Colors.grey.shade800,
+                                              child: const Center(
+                                                child: Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.white,
+                                                  size: 48,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      child: Stack(
-                                        children: [
-                                          // Score Display
-                                          Positioned(
-                                            right: 10,
-                                            top: 10,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.black
-                                                    .withOpacity(0.6),
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                              ),
-                                              child: Text(
-                                                '${score.round()}%',
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
 
-                                          // Performance Level
-                                          Positioned(
-                                            left: 10,
-                                            top: 10,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.black
-                                                    .withOpacity(0.6),
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                              ),
-                                              child: Text(
-                                                _getPerformanceText(score),
-                                                style: TextStyle(
-                                                  color: _getScoreColor(score),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
+                                        // เพิ่ม gradient overlay
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                _getScoreColor(score)
+                                                    .withOpacity(0.8),
+                                                _getScoreColor(score)
+                                                    .withOpacity(0.3),
+                                              ],
                                             ),
                                           ),
+                                        ),
 
-                                          // Pose Name
-                                          Positioned(
-                                            left: 10,
-                                            right: 10,
-                                            bottom: 10,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.black
-                                                    .withOpacity(0.6),
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                              ),
-                                              child: Text(
-                                                poseName,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
+                                        // Score Display
+                                        Positioned(
+                                          right: 10,
+                                          top: 10,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Colors.black.withOpacity(0.6),
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
+                                            child: Text(
+                                              '${score.round()}%',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        ),
+
+                                        // Performance Level
+                                        Positioned(
+                                          left: 10,
+                                          top: 10,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Colors.black.withOpacity(0.6),
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
+                                            child: Text(
+                                              _getPerformanceText(score),
+                                              style: TextStyle(
+                                                color: _getScoreColor(score),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+
+                                        // Pose Name
+                                        Positioned(
+                                          left: 10,
+                                          right: 10,
+                                          bottom: 10,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Colors.black.withOpacity(0.6),
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
+                                            child: Text(
+                                              poseName,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   );
                                 },

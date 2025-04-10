@@ -5,17 +5,15 @@ import android.os.Bundle
 import android.view.View
 import android.widget.VideoView
 import android.app.Activity
-import android.widget.MediaController
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.util.Log
-import android.app.ProgressDialog
 import com.google.firebase.storage.FirebaseStorage
 import android.widget.Toast
 
 class VideoActivity : Activity() {
     private lateinit var videoView: VideoView
-    private lateinit var progressDialog: ProgressDialog
+    private lateinit var loadingDialog: FullScreenLoadingDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,27 +44,23 @@ class VideoActivity : Activity() {
             }
         }
 
-        // Create progress dialog
-        progressDialog = ProgressDialog(this).apply {
-            setMessage("กำลังโหลดวิดีโอสอนท่า...")
-            setCancelable(false)
-            setProgressStyle(ProgressDialog.STYLE_SPINNER)
-        }
-
         // Add VideoView to layout
         layout.addView(videoView)
         setContentView(layout)
 
         // รับชื่อไฟล์วิดีโอจาก intent
         val videoFileName = intent.getStringExtra("videoFileName") ?: "rest_video.mp4"
+        Log.d("VideoActivity", "videoFileName: $videoFileName")
         
-        // เริ่มโหลดและเล่นวิดีโอจาก Firebase Storage
+        // สร้าง FullScreenLoadingDialog แบบใหม่
+        loadingDialog = FullScreenLoadingDialog(this)
+        
+        // แสดง loading dialog และเริ่มโหลดวิดีโอ
+        loadingDialog.show()
         loadVideoFromFirebaseStorage(videoFileName)
     }
 
     private fun loadVideoFromFirebaseStorage(videoFileName: String) {
-        progressDialog.show()
-
         // สร้าง path ให้ถูกต้อง
         val storageRef = FirebaseStorage.getInstance().reference
         val videoRef = storageRef.child("Yogavideo/$videoFileName")
@@ -82,7 +76,7 @@ class VideoActivity : Activity() {
 
             // เล่นวิดีโอเมื่อพร้อม
             videoView.setOnPreparedListener { mediaPlayer ->
-                progressDialog.dismiss()
+                loadingDialog.dismiss()
                 mediaPlayer.setVideoScalingMode(android.media.MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
                 mediaPlayer.start()
                 Log.d("VideoActivity", "Video playback started")
@@ -97,7 +91,7 @@ class VideoActivity : Activity() {
             
             // จัดการเมื่อเกิดข้อผิดพลาด
             videoView.setOnErrorListener { mediaPlayer, what, extra ->
-                progressDialog.dismiss()
+                loadingDialog.dismiss()
                 Log.e("VideoActivity", "Error playing video: what=$what, extra=$extra")
                 Toast.makeText(this, "ไม่สามารถเล่นวิดีโอได้", Toast.LENGTH_SHORT).show()
                 setResult(Activity.RESULT_OK) // Return OK anyway to continue the flow
@@ -105,7 +99,7 @@ class VideoActivity : Activity() {
                 true
             }
         }.addOnFailureListener { exception ->
-            progressDialog.dismiss()
+            loadingDialog.dismiss()
             Log.e("VideoActivity", "Failed to get video URL: ${exception.message}")
             Toast.makeText(this, "ไม่พบวิดีโอสอนท่า กำลังใช้วิดีโอสำรอง", Toast.LENGTH_SHORT).show()
             
@@ -179,8 +173,8 @@ class VideoActivity : Activity() {
     
     override fun onDestroy() {
         super.onDestroy()
-        if (progressDialog.isShowing) {
-            progressDialog.dismiss()
+        if (::loadingDialog.isInitialized && loadingDialog.isShowing) {
+            loadingDialog.dismiss()
         }
     }
 }

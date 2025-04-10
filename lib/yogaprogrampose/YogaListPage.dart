@@ -1,483 +1,324 @@
-// import 'package:flutter/material.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart'; // เพิ่ม import นี้
-// import './ProgramDetailPage.dart';
-
-// class YogaListPage extends StatelessWidget {
-//   const YogaListPage({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final currentUser = FirebaseAuth.instance.currentUser;
-
-//     return Scaffold(
-//       body: Stack(
-//         children: [
-//           // พื้นหลังรูป listBG.png
-//           Positioned.fill(
-//             child: Image.asset(
-//               'assets/img/listBG.png', // Path ของรูป listBG.png
-//               fit: BoxFit.cover,
-//             ),
-//           ),
-//           // ชั้นสีดำโปร่งใส
-//           Positioned.fill(
-//             child: Container(
-//               color: Colors.black.withOpacity(0.8), // ปรับความโปร่งใส
-//             ),
-//           ),
-//           SafeArea(
-//             child: Column(
-//               children: [
-//                 // AppBar
-//                 AppBar(
-//                   backgroundColor: Colors.transparent,
-//                   elevation: 0,
-//                   title: const Text(
-//                     'REGA', // ชื่อแอป
-//                     style: TextStyle(
-//                       fontSize: 24,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.white,
-//                     ),
-//                   ),
-//                   centerTitle: true,
-//                   leading: IconButton(
-//                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-//                     onPressed: () => Navigator.pop(context),
-//                   ),
-//                 ),
-//                 // เนื้อหาในหน้า
-//                 Expanded(
-//                   child: StreamBuilder<QuerySnapshot>(
-//                     stream: FirebaseFirestore.instance
-//                         .collection('Yoga Program')
-//                         .snapshots(),
-//                     builder: (context, snapshot) {
-//                       if (snapshot.connectionState == ConnectionState.waiting) {
-//                         return const Center(child: CircularProgressIndicator());
-//                       }
-//                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-//                         return const Center(
-//                           child: Text(
-//                             'ไม่มีรายการโยคะในขณะนี้',
-//                             style: TextStyle(color: Colors.white, fontSize: 16),
-//                           ),
-//                         );
-//                       }
-
-//                       final yogaPrograms = snapshot.data!.docs;
-
-//                       return ListView.builder(
-//                         padding: const EdgeInsets.all(16),
-//                         itemCount: yogaPrograms.length,
-//                         itemBuilder: (context, index) {
-//                           final yogaProgram = yogaPrograms[index];
-//                           final pictureFileName = yogaProgram['Picture'] ??
-//                               ''; // ชื่อไฟล์รูปภาพจาก field Picture
-
-//                           return Container(
-//                             margin: const EdgeInsets.only(bottom: 16),
-//                             decoration: BoxDecoration(
-//                               borderRadius: BorderRadius.circular(16),
-//                               boxShadow: [
-//                                 BoxShadow(
-//                                   color: Colors.black.withOpacity(0.5),
-//                                   blurRadius: 10,
-//                                   spreadRadius: 1,
-//                                   offset: const Offset(0, 5),
-//                                 ),
-//                               ],
-//                             ),
-//                             child: Stack(
-//                               children: [
-//                                 // รูปภาพของรายการ
-//                                 ClipRRect(
-//                                   borderRadius: BorderRadius.circular(16),
-//                                   child: pictureFileName.isNotEmpty
-//                                       ? Image.asset(
-//                                           'assets/img/$pictureFileName', // ใช้ชื่อไฟล์รูปภาพ
-//                                           width: double.infinity,
-//                                           height: 180,
-//                                           fit: BoxFit.cover,
-//                                         )
-//                                       : const Center(
-//                                           child: Icon(
-//                                             Icons.broken_image,
-//                                             color: Colors.white,
-//                                             size: 48,
-//                                           ),
-//                                         ),
-//                                 ),
-//                                 // เลเยอร์โปร่งใส
-//                                 Positioned.fill(
-//                                   child: Container(
-//                                     decoration: BoxDecoration(
-//                                       borderRadius: BorderRadius.circular(16),
-//                                       color: Colors.black
-//                                           .withOpacity(0.4), // ปรับ opacity
-//                                     ),
-//                                   ),
-//                                 ),
-//                                 // ชื่อโปรแกรม
-//                                 Positioned(
-//                                   top: 16,
-//                                   left: 16,
-//                                   child: Text(
-//                                     yogaProgram['Name'] ?? 'No Name',
-//                                     style: const TextStyle(
-//                                       fontSize: 20,
-//                                       fontWeight: FontWeight.bold,
-//                                       color: Colors.white,
-//                                     ),
-//                                   ),
-//                                 ),
-//                                 // "Yoga Therapy" Text
-//                                 Positioned(
-//                                   top: 16,
-//                                   right: 16,
-//                                   child: const Text(
-//                                     'Yoga Therapy',
-//                                     style: TextStyle(
-//                                       fontSize: 14,
-//                                       color: Colors.white70,
-//                                     ),
-//                                   ),
-//                                 ),
-//                                 // ปุ่ม Know More
-//                                 Positioned(
-//                                   bottom: 16,
-//                                   right: 16,
-//                                   child: ElevatedButton(
-//                                     onPressed: () {
-//                                       Navigator.push(
-//                                         context,
-//                                         MaterialPageRoute(
-//                                           builder: (context) =>
-//                                               ProgramDetailPage(
-//                                             programId: yogaProgram.id,
-//                                           ),
-//                                         ),
-//                                       );
-//                                     },
-//                                     style: ElevatedButton.styleFrom(
-//                                       backgroundColor:
-//                                           const Color.fromARGB(164, 0, 0, 0),
-//                                       shape: RoundedRectangleBorder(
-//                                         borderRadius: BorderRadius.circular(8),
-//                                       ),
-//                                     ),
-//                                     child: const Text(
-//                                       'Know More',
-//                                       style: TextStyle(
-//                                           fontSize: 14, color: Colors.white),
-//                                     ),
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           );
-//                         },
-//                       );
-//                     },
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import './ProgramDetailPage.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // เพิ่ม import สำหรับ Firebase Storage
+import 'package:cached_network_image/cached_network_image.dart';
+import '../services/storage_service.dart'; // ปรับให้ import จากไฟล์แยก
 
-class YogaListPage extends StatelessWidget {
+class YogaListPage extends StatefulWidget {
   const YogaListPage({Key? key}) : super(key: key);
 
-  // เพิ่มฟังก์ชันสำหรับดึง URL ของรูปภาพจาก Firebase Storage
-  Future<String> _getImageUrl(String imageName) async {
-    try {
-      if (imageName.isEmpty) return '';
+  @override
+  State<YogaListPage> createState() => _YogaListPageState();
+}
 
-      // ใช้ Reference เพื่อชี้ไปที่ไฟล์ในพาธที่ต้องการ
-      final ref = FirebaseStorage.instance.ref().child('Yogapose/$imageName');
-      // ดึง URL สำหรับดาวน์โหลด
-      return await ref.getDownloadURL();
+class _YogaListPageState extends State<YogaListPage> {
+  final StorageService _storageService = StorageService();
+  String? _backgroundImageUrl;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _yogaPrograms = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  // โหลดข้อมูลทั้งหมดที่จำเป็นล่วงหน้า
+  Future<void> _loadData() async {
+    try {
+      // 1. โหลดรูปพื้นหลังพร้อมกับดึงข้อมูลโปรแกรม
+      final futures = await Future.wait([
+        _storageService.getImageUrl('listBG.png'),
+        FirebaseFirestore.instance.collection('Yoga Program').get(),
+      ]);
+
+      // บันทึก URL ของรูปพื้นหลัง
+      final backgroundUrl = futures[0] as String;
+      final programsSnapshot = futures[1] as QuerySnapshot;
+
+      // สร้างรายการข้อมูลโปรแกรมทั้งหมด
+      final programs = <Map<String, dynamic>>[];
+      final imageFutures = <Future<void>>[];
+
+      for (var doc in programsSnapshot.docs) {
+        final program = {
+          'id': doc.id,
+          'name': doc['Name'] ?? 'No Name',
+          'pictureFileName': doc['Picture'] ?? '',
+          'imageUrl': '',
+        };
+
+        programs.add(program);
+
+        // ถ้ามีรูปภาพ ให้โหลด URL ของรูปภาพล่วงหน้า
+        if (program['pictureFileName'].isNotEmpty) {
+          final future = _storageService
+              .getImageUrl(program['pictureFileName'])
+              .then((url) {
+            program['imageUrl'] = url;
+          });
+
+          imageFutures.add(future);
+        }
+      }
+
+      // รอให้โหลด URL ของรูปภาพทั้งหมดเสร็จ
+      await Future.wait(imageFutures);
+
+      if (mounted) {
+        setState(() {
+          _backgroundImageUrl = backgroundUrl;
+          _yogaPrograms = programs;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      debugPrint("Error getting image URL: $e");
-      return ''; // ส่งค่าว่างกลับไปในกรณีที่มีข้อผิดพลาด
+      debugPrint('Error loading data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  // นำทางไปยังหน้ารายละเอียดโปรแกรม
+  void _navigateToProgramDetail(String programId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProgramDetailPage(
+          programId: programId,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
-      body: Stack(
-        children: [
-          // พื้นหลังรูป listBG.png - แก้ไขเป็นใช้ FutureBuilder เพื่อโหลดรูปจาก Storage
-          Positioned.fill(
-            child: FutureBuilder<String>(
-              future: _getImageUrl(
-                  'listBG.png'), // เปลี่ยนเป็นชื่อไฟล์ที่ถูกต้องในพาธ Yogapose/
-              builder: (context, urlSnapshot) {
-                if (urlSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!urlSnapshot.hasData || urlSnapshot.data!.isEmpty) {
-                  return Container(
-                    color: Colors.black, // ถ้าไม่มีรูปใช้พื้นหลังสีดำแทน
-                  );
-                }
-                // ใช้ Network Image แทน Asset Image
-                return Image.network(
-                  urlSnapshot.data!,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color:
-                          Colors.black, // ถ้าโหลดรูปมีปัญหาใช้พื้นหลังสีดำแทน
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          // ชั้นสีดำโปร่งใส
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.8), // ปรับความโปร่งใส
-            ),
-          ),
-          SafeArea(
-            child: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
               children: [
-                // AppBar
-                AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  title: const Text(
-                    'REGA', // ชื่อแอป
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  centerTitle: true,
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
+                // พื้นหลัง
+                Positioned.fill(
+                  child: _backgroundImageUrl?.isNotEmpty == true
+                      ? CachedNetworkImage(
+                          imageUrl: _backgroundImageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.black),
+                          errorWidget: (context, url, error) =>
+                              Container(color: Colors.black),
+                        )
+                      : Container(color: Colors.black),
+                ),
+                // ชั้นสีดำโปร่งใส
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.8),
                   ),
                 ),
-                // เนื้อหาในหน้า
-                Expanded(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('Yoga Program')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            'ไม่มีรายการโยคะในขณะนี้',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      // AppBar
+                      AppBar(
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        title: const Text(
+                          'REGA',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
-                        );
-                      }
-
-                      final yogaPrograms = snapshot.data!.docs;
-
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: yogaPrograms.length,
-                        itemBuilder: (context, index) {
-                          final yogaProgram = yogaPrograms[index];
-                          final pictureFileName = yogaProgram['Picture'] ?? '';
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                  offset: const Offset(0, 5),
+                        ),
+                        centerTitle: true,
+                        leading: IconButton(
+                          icon:
+                              const Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      // เนื้อหาในหน้า
+                      Expanded(
+                        child: _yogaPrograms.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'ไม่มีรายการโยคะในขณะนี้',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16),
                                 ),
-                              ],
-                            ),
-                            child: Stack(
-                              children: [
-                                // รูปภาพของรายการ - แก้ไขเป็นใช้ FutureBuilder เพื่อโหลดรูปจาก Storage
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: FutureBuilder<String>(
-                                    future: _getImageUrl(pictureFileName),
-                                    builder: (context, urlSnapshot) {
-                                      if (urlSnapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        return Container(
-                                          width: double.infinity,
-                                          height: 180,
-                                          color: Colors.grey.shade800,
-                                          child: const Center(
-                                            child: CircularProgressIndicator(),
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _yogaPrograms.length,
+                                itemBuilder: (context, index) {
+                                  final program = _yogaPrograms[index];
+
+                                  return GestureDetector(
+                                    onTap: () =>
+                                        _navigateToProgramDetail(program['id']),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.5),
+                                            blurRadius: 10,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 5),
                                           ),
-                                        );
-                                      }
-                                      if (!urlSnapshot.hasData ||
-                                          urlSnapshot.data!.isEmpty) {
-                                        return Container(
-                                          width: double.infinity,
-                                          height: 180,
-                                          color: Colors.grey.shade800,
-                                          child: const Center(
-                                            child: Icon(
-                                              Icons.broken_image,
-                                              color: Colors.white,
-                                              size: 48,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                      // ใช้ Network Image แทน Asset Image
-                                      return Image.network(
-                                        urlSnapshot.data!,
-                                        width: double.infinity,
-                                        height: 180,
-                                        fit: BoxFit.cover,
-                                        loadingBuilder:
-                                            (context, child, loadingProgress) {
-                                          if (loadingProgress == null)
-                                            return child;
-                                          return Container(
-                                            width: double.infinity,
-                                            height: 180,
-                                            color: Colors.grey.shade800,
-                                            child: Center(
-                                              child: CircularProgressIndicator(
-                                                value: loadingProgress
-                                                            .expectedTotalBytes !=
-                                                        null
-                                                    ? loadingProgress
-                                                            .cumulativeBytesLoaded /
-                                                        loadingProgress
-                                                            .expectedTotalBytes!
-                                                    : null,
+                                        ],
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          splashColor:
+                                              Colors.white.withOpacity(0.3),
+                                          highlightColor:
+                                              Colors.white.withOpacity(0.1),
+                                          onTap: () => _navigateToProgramDetail(
+                                              program['id']),
+                                          child: Stack(
+                                            children: [
+                                              // รูปภาพของรายการ
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                child: program['imageUrl']
+                                                        .isNotEmpty
+                                                    ? CachedNetworkImage(
+                                                        imageUrl:
+                                                            program['imageUrl'],
+                                                        width: double.infinity,
+                                                        height: 180,
+                                                        fit: BoxFit.cover,
+                                                        placeholder:
+                                                            (context, url) =>
+                                                                Container(
+                                                          width:
+                                                              double.infinity,
+                                                          height: 180,
+                                                          color: Colors
+                                                              .grey.shade800,
+                                                          child: const Center(
+                                                            child:
+                                                                CircularProgressIndicator(),
+                                                          ),
+                                                        ),
+                                                        errorWidget: (context,
+                                                                url, error) =>
+                                                            Container(
+                                                          width:
+                                                              double.infinity,
+                                                          height: 180,
+                                                          color: Colors
+                                                              .grey.shade800,
+                                                          child: const Center(
+                                                            child: Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 48,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : Container(
+                                                        width: double.infinity,
+                                                        height: 180,
+                                                        color: Colors
+                                                            .grey.shade800,
+                                                        child: const Center(
+                                                          child: Icon(
+                                                            Icons
+                                                                .image_not_supported,
+                                                            color: Colors.white,
+                                                            size: 48,
+                                                          ),
+                                                        ),
+                                                      ),
                                               ),
-                                            ),
-                                          );
-                                        },
-                                        errorBuilder:
-                                            (context, error, stackTrace) {
-                                          return Container(
-                                            width: double.infinity,
-                                            height: 180,
-                                            color: Colors.grey.shade800,
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.broken_image,
-                                                color: Colors.white,
-                                                size: 48,
+                                              // เลเยอร์โปร่งใส
+                                              Positioned.fill(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16),
+                                                    color: Colors.black
+                                                        .withOpacity(0.4),
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                                // เลเยอร์โปร่งใส
-                                Positioned.fill(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      color: Colors.black
-                                          .withOpacity(0.4), // ปรับ opacity
-                                    ),
-                                  ),
-                                ),
-                                // ชื่อโปรแกรม
-                                Positioned(
-                                  top: 16,
-                                  left: 16,
-                                  child: Text(
-                                    yogaProgram['Name'] ?? 'No Name',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                // "Yoga Therapy" Text
-
-                                // ปุ่ม Know More
-                                Positioned(
-                                  bottom: 16,
-                                  right: 16,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ProgramDetailPage(
-                                            programId: yogaProgram.id,
+                                              // ชื่อโปรแกรม
+                                              Positioned(
+                                                top: 16,
+                                                left: 16,
+                                                right: 16,
+                                                child: Text(
+                                                  program['name'],
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              // ปุ่ม Know More
+                                              Positioned(
+                                                bottom: 16,
+                                                right: 16,
+                                                child: ElevatedButton(
+                                                  onPressed: () =>
+                                                      _navigateToProgramDetail(
+                                                          program['id']),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        const Color.fromARGB(
+                                                            164, 0, 0, 0),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                  ),
+                                                  child: const Text(
+                                                    'Know More',
+                                                    style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          const Color.fromARGB(164, 0, 0, 0),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                     ),
-                                    child: const Text(
-                                      'Know More',
-                                      style: TextStyle(
-                                          fontSize: 14, color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

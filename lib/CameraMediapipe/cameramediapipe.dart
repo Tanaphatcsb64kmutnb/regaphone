@@ -933,7 +933,11 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen>
     _startLoadingCountdown();
 
     try {
-      await _poseTracker.playInstructionVideo(videoFileName);
+      // ส่งชื่อท่าไปด้วย ไม่ใช่แค่ชื่อไฟล์
+      await _poseTracker.playInstructionVideo(videoFileName,
+          poseName: currentPoseIndex < yogaPoses.length
+              ? yogaPoses[currentPoseIndex]['name']
+              : "ท่าโยคะ");
     } catch (e) {
       debugPrint("Failed to play instruction video: $e");
       // ถ้าเกิด error ให้จำลองการจบวิดีโอเพื่อเริ่มท่า
@@ -992,7 +996,9 @@ class _CameraMediapipeScreenState extends State<CameraMediapipeScreen>
 
               if (currentPoseIndex < yogaPoses.length) {
                 // เล่นวิดีโอสอนของท่าถัดไป
-                _showInstructionVideo(yogaPoses[currentPoseIndex]['video']);
+                _showInstructionVideo(
+                  yogaPoses[currentPoseIndex]['video'],
+                );
               } else {
                 // ถ้าทำครบทุกท่าแล้ว ให้ไปหน้าผลลัพธ์
                 _finishProgram();

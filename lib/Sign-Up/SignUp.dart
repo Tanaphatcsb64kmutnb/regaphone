@@ -21,10 +21,55 @@ class _SignUpPageState extends State<SignUpPage> {
       TextEditingController();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isLoading = false;
+
+  // Function to check if username or email already exists in Firestore
+  Future<Map<String, bool>> _checkUserExists() async {
+    final String username = _usernameController.text.trim();
+    final String email = _emailController.text.trim();
+
+    // Check if username exists
+    final QuerySnapshot usernameQuery = await _firestore
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .get();
+
+    // Check if email exists
+    final QuerySnapshot emailQuery = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .get();
+
+    return {
+      'usernameExists': usernameQuery.docs.isNotEmpty,
+      'emailExists': emailQuery.docs.isNotEmpty,
+    };
+  }
 
   void _signUp() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
       try {
+        // First check if username or email already exists
+        final Map<String, bool> userExists = await _checkUserExists();
+
+        if (userExists['usernameExists']!) {
+          // Show username exists error
+          _showErrorDialog('Username already exists',
+              'This username is already taken. Please choose another one.');
+          return;
+        }
+
+        if (userExists['emailExists']!) {
+          // Show email exists error
+          _showErrorDialog('Email already exists',
+              'This email is already registered. Please use another email or sign in.');
+          return;
+        }
+
         // Create a new user with email and password
         final UserCredential userCredential =
             await _auth.createUserWithEmailAndPassword(
@@ -67,7 +112,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
         print('User registered and data saved to Firestore');
       } on FirebaseAuthException catch (e) {
-        // Handle Firebase errors
+        // Handle Firebase Auth errors
         String message = '';
         if (e.code == 'email-already-in-use') {
           message = 'The email is already in use by another account.';
@@ -79,22 +124,34 @@ class _SignUpPageState extends State<SignUpPage> {
           message = 'Registration failed. Please try again later.';
         }
 
-        // Show error message
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Error'),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+        _showErrorDialog('Error', message);
+      } catch (e) {
+        // Handle other errors
+        _showErrorDialog(
+            'Error', 'An unexpected error occurred. Please try again later.');
+        print(e.toString());
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -230,24 +287,26 @@ class _SignUpPageState extends State<SignUpPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _signUp,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 24),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          backgroundColor: Colors.white.withOpacity(0.9),
-                        ),
-                        child: const Text(
-                          'SIGN UP',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
+                      _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : ElevatedButton(
+                              onPressed: _signUp,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 24),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                backgroundColor: Colors.white.withOpacity(0.9),
+                              ),
+                              child: const Text(
+                                'SIGN UP',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: () {
