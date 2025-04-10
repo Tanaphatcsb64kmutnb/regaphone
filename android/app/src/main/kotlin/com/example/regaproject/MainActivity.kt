@@ -15,6 +15,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import android.graphics.Bitmap
 import com.google.firebase.auth.FirebaseAuth  // เพิ่มบรรทัดนี้
+import android.util.Log  // เพิ่มบรรทัดนี้
+
 
 class MainActivity : FlutterActivity() {
     // Existing channels
@@ -66,11 +68,13 @@ private lateinit var singleVideoMethodChannel: MethodChannel
         // Setup camera method handler
         cameraMethodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
-                "playRestVideo" -> {
-            val videoFileName = call.argument<String>("videoFileName") ?: "rest_video"
-            playRestVideo(videoFileName)
-            result.success(null)
-        }
+               "playRestVideo" -> {
+  val videoFileName = call.argument<String>("videoFileName") ?: "rest_video.mp4"
+  val poseName = call.argument<String>("poseName") ?: "ท่าโยคะ"
+  Log.d("MainActivity", "ได้รับชื่อท่า: $poseName และ videoFileName: $videoFileName")
+  playRestVideo(videoFileName, poseName)
+  result.success(null)
+}
                 "switchCamera" -> {
                     val isFrontCamera = call.argument<Boolean>("camera") ?: true
                     result.success(null)
@@ -122,12 +126,13 @@ private lateinit var singleVideoMethodChannel: MethodChannel
     }
 
     // MainActivity.kt
-fun playRestVideo(videoFileName: String = "rest_video") {
+fun playRestVideo(videoFileName: String = "rest_video", poseName: String = "ท่าโยคะ") {
     val intent = Intent(this, VideoActivity::class.java)
     intent.putExtra("videoFileName", videoFileName)
+    intent.putExtra("poseName", poseName)
+    Log.d("MainActivity", "กำลังส่ง intent ด้วยชื่อท่า: $poseName")
     startActivityForResult(intent, VIDEO_REQUEST_CODE)
 }
-
 
 // เพิ่มฟังก์ชัน playSingleVideo
 fun playSingleVideo(videoFileName: String) {

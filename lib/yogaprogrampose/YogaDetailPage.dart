@@ -4,6 +4,8 @@ import 'PoseDetailPage.dart';
 import '../CameraMediapipe/cameramediapipe.dart';
 import '../CameraMediapipe/countdownPage.dart';
 import '../widgets/local_image.dart';
+import '../services/storage_service.dart'; // เปลี่ยนมาใช้ StorageService
+import 'package:cached_network_image/cached_network_image.dart'; // เพิ่ม CachedNetworkImage
 
 class YogaDetailPage extends StatefulWidget {
   final String programId;
@@ -20,6 +22,36 @@ class YogaDetailPage extends StatefulWidget {
 }
 
 class _YogaDetailPageState extends State<YogaDetailPage> {
+  final StorageService _storageService =
+      StorageService(); // เพิ่ม instance ของ StorageService
+  // Cache สำหรับเก็บ URL ของรูปภาพ
+  final Map<String, String> _imageUrlCache = {};
+
+  // ดึง URL ของรูปภาพโดยใช้ StorageService พร้อมระบบ cache
+  Future<String> _getImageUrl(String imageName) async {
+    if (imageName.isEmpty) return '';
+
+    // ถ้ามี URL ใน cache แล้ว ให้ใช้จาก cache
+    if (_imageUrlCache.containsKey(imageName)) {
+      return _imageUrlCache[imageName]!;
+    }
+
+    try {
+      // ดึง URL ผ่าน StorageService
+      final url = await _storageService.getImageUrl(imageName);
+
+      // เก็บ URL ลงใน cache
+      if (url.isNotEmpty) {
+        _imageUrlCache[imageName] = url;
+      }
+
+      return url;
+    } catch (e) {
+      debugPrint("Error getting image URL: $e");
+      return '';
+    }
+  }
+
   // Favorite handling methods
   Future<bool> checkIfFavorite() async {
     final querySnapshot = await FirebaseFirestore.instance
@@ -95,13 +127,20 @@ class _YogaDetailPageState extends State<YogaDetailPage> {
 
           return Stack(
             children: [
-              // ใช้ LocalImage แทน Image.asset
               Positioned.fill(
                 child: backgroundFileName.isNotEmpty
-                    ? LocalImage(
-                        fileName: backgroundFileName,
-                        assetFallback: 'assets/img/$backgroundFileName',
+                    ? Image.asset(
+                        'assets/img/$backgroundFileName',
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              color: Colors.white,
+                              size: 48,
+                            ),
+                          );
+                        },
                       )
                     : const Center(
                         child: Icon(
@@ -110,6 +149,9 @@ class _YogaDetailPageState extends State<YogaDetailPage> {
                           size: 48,
                         ),
                       ),
+                    );
+                  },
+                ),
               ),
               Positioned.fill(
                 child: Container(
@@ -247,10 +289,8 @@ class _YogaDetailPageState extends State<YogaDetailPage> {
                                 },
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
-                                  // ใช้ LocalImage แทน Image.asset
-                                  child: LocalImage(
-                                    fileName: posePicture,
-                                    assetFallback: 'assets/img/$posePicture',
+                                  child: Image.asset(
+                                    'assets/img/${yogaPose['Picture']}',
                                     fit: BoxFit.cover,
                                   ),
                                 ),

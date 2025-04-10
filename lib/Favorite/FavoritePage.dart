@@ -1,161 +1,106 @@
-// import 'package:flutter/material.dart';
-
-// class FavoritePage extends StatelessWidget {
-//   const FavoritePage({Key? key}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // ข้อมูลตัวอย่าง (Dummy)
-//     const String programTitle = 'STRESS FREE YOGA';
-//     const String description = 'โปรแกรมโยคะลดความเครียด';
-//     const String imagePath = 'assets/img/listBG.png'; // รูปในการ์ด
-
-//     return Scaffold(
-//       // ไม่ใส่ appBar เพื่อออกแบบ Header เอง (Stack + Positioned)
-//       body: Stack(
-//         children: [
-//           // ภาพพื้นหลัง
-//           Positioned.fill(
-//             child: Image.asset(
-//               'assets/img/yoga4.png', // พื้นหลังตามต้องการ
-//               fit: BoxFit.cover,
-//             ),
-//           ),
-
-//           // เลเยอร์ไล่สีดำโปร่งใสเล็กน้อย ทับบนพื้นหลัง เพื่อให้อ่านข้อความได้ชัด
-//           Positioned.fill(
-//             child: Container(
-//               decoration: BoxDecoration(
-//                 gradient: LinearGradient(
-//                   begin: Alignment.topCenter,
-//                   end: Alignment.bottomCenter,
-//                   colors: [
-//                     Colors.black.withOpacity(0.7),
-//                     Colors.black.withOpacity(0.3),
-//                     Colors.black.withOpacity(0.7),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ),
-
-//           // เนื้อหาทับด้านบน
-//           SafeArea(
-//             child: Padding(
-//               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   // ปุ่มย้อนกลับ
-//                   GestureDetector(
-//                     onTap: () => Navigator.pop(context),
-//                     child: const Row(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         Icon(Icons.arrow_back, color: Colors.white),
-//                         SizedBox(width: 4),
-//                       ],
-//                     ),
-//                   ),
-
-//                   const SizedBox(height: 24),
-
-//                   // หัวข้อหลัก
-//                   const Text(
-//                     'รายการโปรดของคุณ',
-//                     style: TextStyle(
-//                       fontSize: 28,
-//                       color: Colors.white,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-
-//                   const SizedBox(height: 24),
-
-//                   // การ์ดแสดงรายการโปรดล่าสุด (ตัวอย่าง 1 ใบ)
-//                   Container(
-//                     padding: const EdgeInsets.all(16),
-//                     decoration: BoxDecoration(
-//                       color: Colors.black.withOpacity(0.4),
-//                       borderRadius: BorderRadius.circular(12),
-//                     ),
-//                     child: Row(
-//                       children: [
-//                         // รูปในการ์ด (ทรงโค้งมน)
-//                         ClipRRect(
-//                           borderRadius: BorderRadius.circular(8),
-//                           child: Image.asset(
-//                             imagePath,
-//                             width: 80,
-//                             height: 80,
-//                             fit: BoxFit.cover,
-//                           ),
-//                         ),
-//                         const SizedBox(width: 16),
-
-//                         // ข้อความรายละเอียด
-//                         const Expanded(
-//                           child: Column(
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: [
-//                               Text(
-//                                 programTitle,
-//                                 style: TextStyle(
-//                                   fontSize: 18,
-//                                   color: Colors.white,
-//                                   fontWeight: FontWeight.bold,
-//                                 ),
-//                               ),
-//                               SizedBox(height: 4),
-//                               Text(
-//                                 description,
-//                                 style: TextStyle(
-//                                   fontSize: 14,
-//                                   color: Colors.white70,
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-
-//                   const SizedBox(height: 16),
-
-//                   // Spacer ดันลงไปด้านล่าง ตามดีไซน์
-//                   const Spacer(),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// FavoritePage.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../yogaprogrampose/ProgramDetailPage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../services/storage_service.dart'; // import StorageService ที่สร้างไว้
 
-class FavoritePage extends StatelessWidget {
+class FavoritePage extends StatefulWidget {
   final String userId;
 
   const FavoritePage({Key? key, required this.userId}) : super(key: key);
+
+  @override
+  State<FavoritePage> createState() => _FavoritePageState();
+}
+
+class _FavoritePageState extends State<FavoritePage> {
+  final StorageService _storageService = StorageService();
+  String? _backgroundImageUrl;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _favoritePrograms = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBackgroundImage();
+  }
+
+  // โหลดรูปภาพพื้นหลังล่วงหน้า
+  Future<void> _loadBackgroundImage() async {
+    try {
+      final url = await _storageService.getImageUrl('yoga2.png');
+      if (mounted) {
+        setState(() {
+          _backgroundImageUrl = url;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading background image: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // โหลดข้อมูลโปรแกรมโปรด
+  Future<List<Map<String, dynamic>>> _loadFavoritePrograms(
+      List<DocumentSnapshot> favoriteDocs) async {
+    final programs = <Map<String, dynamic>>[];
+    final futures = <Future<void>>[];
+
+    for (var favoriteDoc in favoriteDocs) {
+      final programRef = favoriteDoc['yogaProgramId'] as DocumentReference;
+
+      final future = programRef.get().then((programSnapshot) async {
+        if (!programSnapshot.exists) return;
+
+        final programData = programSnapshot.data() as Map<String, dynamic>;
+        final pictureFileName = programData['Picture'] ?? '';
+
+        // ดึง URL รูปภาพ
+        String imageUrl = '';
+        if (pictureFileName.isNotEmpty) {
+          imageUrl = await _storageService.getImageUrl(pictureFileName);
+        }
+
+        programs.add({
+          'id': programSnapshot.id,
+          'name': programData['Name'] ?? 'No Name',
+          'description': programData['Description'] ?? 'No Description',
+          'imageUrl': imageUrl,
+        });
+      });
+
+      futures.add(future);
+    }
+
+    await Future.wait(futures);
+    return programs;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // ภาพพื้นหลัง
+          // ภาพพื้นหลัง - ใช้ CachedNetworkImage แทน
           Positioned.fill(
-            child: Image.asset(
-              'assets/img/yoga2.png',
-              fit: BoxFit.cover,
-            ),
+            child: _isLoading
+                ? Container(color: Colors.black)
+                : (_backgroundImageUrl != null &&
+                        _backgroundImageUrl!.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: _backgroundImageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            Container(color: Colors.black),
+                        errorWidget: (context, url, error) =>
+                            Container(color: Colors.black),
+                      )
+                    : Container(color: Colors.black)),
           ),
           // Gradient overlay
           Positioned.fill(
@@ -217,7 +162,7 @@ class FavoritePage extends StatelessWidget {
                           .collection('FavoriteYogaProgram')
                           .where('userId',
                               isEqualTo: FirebaseFirestore.instance
-                                  .doc('Users/$userId'))
+                                  .doc('Users/${widget.userId}'))
                           .snapshots(),
                       builder: (context, favSnapshot) {
                         if (favSnapshot.connectionState ==
@@ -237,28 +182,32 @@ class FavoritePage extends StatelessWidget {
                           );
                         }
 
-                        return ListView.builder(
-                          itemCount: favSnapshot.data!.docs.length,
-                          itemBuilder: (context, index) {
-                            final favoriteDoc = favSnapshot.data!.docs[index];
-                            final programRef = favoriteDoc['yogaProgramId']
-                                as DocumentReference;
+                        // ใช้ FutureBuilder เพื่อโหลดข้อมูลทั้งหมดพร้อมกัน
+                        return FutureBuilder<List<Map<String, dynamic>>>(
+                          future: _loadFavoritePrograms(favSnapshot.data!.docs),
+                          builder: (context, programsSnapshot) {
+                            if (programsSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
 
-                            return FutureBuilder<DocumentSnapshot>(
-                              future: programRef.get(),
-                              builder: (context, programSnapshot) {
-                                if (!programSnapshot.hasData) {
-                                  return const SizedBox();
-                                }
+                            final programs = programsSnapshot.data ?? [];
 
-                                final programData = programSnapshot.data!;
-                                final programName =
-                                    programData['Name'] ?? 'No Name';
-                                final description =
-                                    programData['Description'] ??
-                                        'No Description';
-                                final pictureFileName =
-                                    programData['Picture'] ?? '';
+                            if (programs.isEmpty) {
+                              return const Center(
+                                child: Text(
+                                  'ไม่พบข้อมูลโปรแกรม',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16),
+                                ),
+                              );
+                            }
+
+                            return ListView.builder(
+                              itemCount: programs.length,
+                              itemBuilder: (context, index) {
+                                final program = programs[index];
 
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 16),
@@ -269,7 +218,7 @@ class FavoritePage extends StatelessWidget {
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               ProgramDetailPage(
-                                            programId: programRef.id,
+                                            programId: program['id'],
                                           ),
                                         ),
                                       );
@@ -282,25 +231,52 @@ class FavoritePage extends StatelessWidget {
                                       ),
                                       child: Row(
                                         children: [
+                                          // ใช้ CachedNetworkImage แทน
                                           ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(8),
-                                            child: Image.asset(
-                                              'assets/img/$pictureFileName',
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                return Container(
-                                                  width: 80,
-                                                  height: 80,
-                                                  color: Colors.grey,
-                                                  child: const Icon(
-                                                      Icons.broken_image),
-                                                );
-                                              },
-                                            ),
+                                            child: program['imageUrl']
+                                                    .isNotEmpty
+                                                ? CachedNetworkImage(
+                                                    imageUrl:
+                                                        program['imageUrl'],
+                                                    width: 80,
+                                                    height: 80,
+                                                    fit: BoxFit.cover,
+                                                    placeholder:
+                                                        (context, url) =>
+                                                            Container(
+                                                      width: 80,
+                                                      height: 80,
+                                                      color:
+                                                          Colors.grey.shade800,
+                                                      child: const Center(
+                                                        child:
+                                                            CircularProgressIndicator(),
+                                                      ),
+                                                    ),
+                                                    errorWidget:
+                                                        (context, url, error) =>
+                                                            Container(
+                                                      width: 80,
+                                                      height: 80,
+                                                      color:
+                                                          Colors.grey.shade800,
+                                                      child: const Icon(
+                                                        Icons.broken_image,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : Container(
+                                                    width: 80,
+                                                    height: 80,
+                                                    color: Colors.grey.shade800,
+                                                    child: const Icon(
+                                                      Icons.image_not_supported,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
                                           ),
                                           const SizedBox(width: 16),
                                           Expanded(
@@ -309,7 +285,7 @@ class FavoritePage extends StatelessWidget {
                                                   CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  programName,
+                                                  program['name'],
                                                   style: const TextStyle(
                                                     fontSize: 18,
                                                     color: Colors.white,
@@ -318,7 +294,7 @@ class FavoritePage extends StatelessWidget {
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  description,
+                                                  program['description'],
                                                   style: const TextStyle(
                                                     fontSize: 14,
                                                     color: Colors.white70,

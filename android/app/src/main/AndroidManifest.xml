@@ -52,6 +52,11 @@
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> -->
 
             <activity android:name=".VideoActivity" android:theme="@style/Theme.AppCompat.NoActionBar" />
+              <activity
+            android:name=".FullScreenLoadingActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
             <activity
     android:name=".SingleVideoActivity"
     android:configChanges="orientation|keyboardHidden|screenSize"

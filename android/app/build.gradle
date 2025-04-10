@@ -417,6 +417,9 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'org.json:json:20210307'
 
+     // เพิ่ม Lottie dependency
+    implementation 'com.airbnb.android:lottie:5.2.0'
+
     // Firebase and notification dependencies
     implementation platform('com.google.firebase:firebase-bom:32.7.1')
     implementation 'com.google.firebase:firebase-analytics-ktx'
@@ -426,11 +429,13 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation 'com.google.firebase:firebase-auth-ktx'  // เพิ่มบรรทัดนี้4
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
-    
+    implementation 'com.google.firebase:firebase-storage:20.3.0'
     
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
     
+    
 }
+
 
 project.ext.ASSET_DIR = "${projectDir}/src/main/assets"
 apply from: 'download_tasks.gradle'

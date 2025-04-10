@@ -41,6 +41,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        centerTitle: true,
         backgroundColor: Colors.black,
         title:
             const Text('การแจ้งเตือน', style: TextStyle(color: Colors.white)),

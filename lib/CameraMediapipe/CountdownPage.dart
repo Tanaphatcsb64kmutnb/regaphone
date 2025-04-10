@@ -4,9 +4,9 @@ import '../CameraMediapipe/cameramediapipe.dart';
 
 class CountdownPage extends StatefulWidget {
   final String programId;
-  
+
   const CountdownPage({Key? key, required this.programId}) : super(key: key);
-  
+
   @override
   State<CountdownPage> createState() => _CountdownPageState();
 }
@@ -14,13 +14,13 @@ class CountdownPage extends StatefulWidget {
 class _CountdownPageState extends State<CountdownPage> {
   int countdown = 3;
   double progress = 0.0;
-  
+
   @override
   void initState() {
     super.initState();
     startCountdown();
   }
-  
+
   void startCountdown() {
     Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
@@ -44,7 +44,7 @@ class _CountdownPageState extends State<CountdownPage> {
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,19 +54,11 @@ class _CountdownPageState extends State<CountdownPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'เริ่มต้นใน: $countdown',
+              'เตรียมตัวลุย !',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'เตรียมพร้อม...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
               ),
             ),
             const SizedBox(height: 40),

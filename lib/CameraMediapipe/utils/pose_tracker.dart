@@ -59,10 +59,13 @@ class PoseTracker {
   }
 
   /// เล่นวิดีโอสอนท่า
-  Future<void> playInstructionVideo(String videoFileName) async {
+  Future<void> playInstructionVideo(String videoFileName,
+      {String? poseName}) async {
     try {
-      await platform
-          .invokeMethod('playRestVideo', {"videoFileName": videoFileName});
+      await platform.invokeMethod('playRestVideo', {
+        "videoFileName": videoFileName,
+        "poseName": poseName ?? "โยคะ", // ส่งชื่อท่าไปแสดงในข้อความโหลด
+      });
     } catch (e) {
       debugPrint("Failed to play instruction video: $e");
       rethrow;
@@ -72,7 +75,10 @@ class PoseTracker {
   /// เล่นวิดีโอพัก
   Future<void> playRestVideo() async {
     try {
-      await platform.invokeMethod('playRestVideo');
+      await platform.invokeMethod('playRestVideo', {
+        "videoFileName": "rest_video.mp4",
+        "poseName": "พัก", // ใช้ชื่อ "พัก" สำหรับวิดีโอพัก
+      });
     } catch (e) {
       debugPrint("Failed to play rest video: $e");
       rethrow;

@@ -211,6 +211,7 @@ class SettingsPage extends StatelessWidget {
       backgroundColor: const Color(0xFF121212),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
         leading: IconButton(

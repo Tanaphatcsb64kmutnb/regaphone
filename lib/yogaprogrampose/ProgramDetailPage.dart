@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'YogaDetailPage.dart';
-import '../widgets/local_image.dart';
+import 'YogaDetailPage.dart'; // สำหรับแสดงท่าที่อยู่ในโปรแกรมนั้น
+import 'package:firebase_auth/firebase_auth.dart'; // เพิ่ม import นี้
 
-class ProgramDetailPage extends StatelessWidget {
+class ProgramDetailPage extends StatefulWidget {
+  // Changed to StatefulWidget
   final String programId;
 
   const ProgramDetailPage({Key? key, required this.programId})
       : super(key: key);
+
+  @override
+  State<ProgramDetailPage> createState() => _ProgramDetailPageState();
+}
+
+class _ProgramDetailPageState extends State<ProgramDetailPage> {
+  final StorageService _storageService =
+      StorageService(); // Added storage service
+  String? _imageUrl; // Added to store the image URL
+  bool _isLoading = true; // Added loading state
+
+  @override
+  void initState() {
+    super.initState();
+    // No need to preload image here as we'll use FutureBuilder with the program data
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +34,7 @@ class ProgramDetailPage extends StatelessWidget {
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
             .collection('Yoga Program')
-            .doc(programId)
+            .doc(widget.programId) // Changed to widget.programId
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -37,17 +53,26 @@ class ProgramDetailPage extends StatelessWidget {
           final programName = programData['Name'] ?? 'No Name';
           final programDescription =
               programData['Description'] ?? 'No Description';
-          final pictureFileName = programData['Picture'] ?? '';
+          final pictureFileName =
+              programData['Picture'] ?? ''; // ดึงชื่อไฟล์รูปจาก field Picture
 
           return Stack(
             children: [
-              // พื้นหลัง (ใช้ LocalImage แทน Image.asset)
+              // พื้นหลัง (ใช้รูปจาก assets ตามชื่อไฟล์ที่ดึงมา)
               Positioned.fill(
                 child: pictureFileName.isNotEmpty
-                    ? LocalImage(
-                        fileName: pictureFileName,
-                        assetFallback: 'assets/img/$pictureFileName',
+                    ? Image.asset(
+                        'assets/img/$pictureFileName', // ใช้ชื่อไฟล์จาก field Picture
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(
+                              Icons.broken_image,
+                              color: Colors.white,
+                              size: 48,
+                            ),
+                          );
+                        },
                       )
                     : const Center(
                         child: Icon(
