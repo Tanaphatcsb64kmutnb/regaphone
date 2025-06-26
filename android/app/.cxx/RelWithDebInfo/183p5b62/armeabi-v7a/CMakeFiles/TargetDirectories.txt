@@ -1,0 +1,2 @@
+D:/regaphonefinal/Rega-Project/regaproject/android/app/.cxx/RelWithDebInfo/183p5b62/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/regaphonefinal/Rega-Project/regaproject/android/app/.cxx/RelWithDebInfo/183p5b62/armeabi-v7a/CMakeFiles/rebuild_cache.dir

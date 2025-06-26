@@ -338,11 +338,18 @@ if (localPropertiesFile.exists()) {
 
 def flutterRoot = localProperties.getProperty('flutter.sdk')
 if (flutterRoot == null) {
-    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+    throw newGradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
 android {
-    namespace = "com.example.regaproject"
+    // namespace = "com.csbkmutnb64.regaproject"
+    namespace = "com.csbkmutnb64v3.regaproject"
     compileSdk = flutter.compileSdkVersion
 
     compileOptions {
@@ -363,7 +370,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.regaproject"
+        // applicationId = "com.csbkmutnb64.regaproject"
+        applicationId = "com.csbkmutnb64v3.regaproject"
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -377,9 +385,24 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+
+
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.release
+             // เพิ่มบรรทัดเหล่านี้
+               minifyEnabled false    // ปิด R8
+    shrinkResources false  // ปิดการตัดทรัพยากร
+       
         }
     }
 }
@@ -390,7 +413,8 @@ flutter {
 
 dependencies {
     // Existing dependencies
-    implementation 'androidx.core:core-ktx:1.8.0'
+    // implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'

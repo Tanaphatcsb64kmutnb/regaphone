@@ -16,7 +16,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+# version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.5.4
@@ -105,86 +106,8 @@ flutter:
     - assets/img/yoga2.png
     - assets/img/yoga3.png
     - assets/img/yoga4.png
-    - assets/img/sex1.png
-    - assets/img/yoga_pose1.png
-    - assets/img/yoga_pose2.png
-    - assets/img/yoga_pose3.png
-    - assets/pose_landmarker_heavy.task
+    - assets/img/yoga5.png
     - assets/pose_landmarker_full.task
-    - assets/pose_landmarker_lite.task
-    - assets/img/officesyndrome.png
-    - assets/img/bloodpressure.png
-    - assets/img/heartdisease.png
-    - assets/img/Armpain.png
-    - assets/img/Backpain.png
-    - assets/img/LegPain.png
-    - assets/img/NeckPain.png 
-    - assets/img/kneepain.png
-    - assets/img/headache.png
-    - assets/img/allergylung.png
-    - assets/img/constipation.png
-    - assets/img/everyyoga.png
-    - assets/img/plantarfasciitis.png
-    - assets/img/Stress.png
-    - assets/img/migraine.png
-    - assets/img/GERD.png
-    - assets/img/Diabetes.png
-    - assets/img/Afterworkout.png
-    - assets/img/hippain.png
-    - assets/img/shouderpain.png
-    - assets/img/Beforeworkout.png
-    - assets/img/assistedsidebendpose.jpg
-    - assets/img/bigtoepose.jpg
-    - assets/img/birddogpose.jpg
-    - assets/img/boatpose.jpg
-    - assets/img/bowpose.jpg
-    - assets/img/bridgepose.jpg
-    - assets/img/butterflypose.jpg
-    - assets/img/cactuspose.jpg
-    - assets/img/camelpose.jpg
-    - assets/img/catcow.jpg
-    - assets/img/chairtwistpose.jpg
-    - assets/img/cobrapose.jpg
-    - assets/img/corpsepose.jpg
-    - assets/img/crescentpose.jpg
-    - assets/img/dancerpose.jpg
-    - assets/img/easypose.jpg
-    - assets/img/extendedsideanglepose.jpg
-    - assets/img/gatepose.jpg
-    - assets/img/goddesspose.jpg
-    - assets/img/halffwbend.jpg
-    - assets/img/HalfLordoftheFishespose.jpg
-    - assets/img/halfmoonpose.jpg
-    - assets/img/halfsplitpose.jpg
-    - assets/img/headtokneefwbend.jpg
-    - assets/img/heropose.jpg
-    - assets/img/lizardpose.jpg
-    - assets/img/lowlungepose.jpg
-    - assets/img/lungingcalfstrecthpose.jpg
-    - assets/img/moutainpose.jpg
-    - assets/img/plowpose.jpg
-    - assets/img/pyramidpose.jpg
-    - assets/img/reversewarriorpose.jpg
-    - assets/img/revolvedheadtokneepose.jpg
-    - assets/img/revolvedsideanglepose.jpg
-    - assets/img/revolvedtrianglepose.jpg
-    - assets/img/salutationsealpose.jpg
-    - assets/img/sideneckstresspose.jpg
-    - assets/img/sideplankpose.jpg
-    - assets/img/sidereclinlingpose.jpg
-    - assets/img/standingbentovercalfpose.jpg
-    - assets/img/standingbowpose.jpg
-    - assets/img/standingfigurepose.jpg
-    - assets/img/standingquadpose.jpg
-    - assets/img/thechairpose.jpg
-    - assets/img/treepose.jpg
-    - assets/img/trianglepose.jpg
-    - assets/img/upwardsalute.jpg
-    - assets/img/upwardsalutsidepose.jpg
-    - assets/img/warriori.jpg
-    - assets/img/warriorii.jpg
-    - assets/img/warrioriii.jpg
-    - assets/img/StandingSpinalTwistPose.jpg
 
     
 

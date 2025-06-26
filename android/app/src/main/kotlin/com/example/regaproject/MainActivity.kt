@@ -1,4 +1,6 @@
-package com.example.regaproject
+//package com.csbkmutnb64.regaproject
+package com.csbkmutnb64v3.regaproject
+
 
 import android.content.Intent
 import io.flutter.embedding.android.FlutterActivity

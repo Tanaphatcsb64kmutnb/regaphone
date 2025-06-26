@@ -1,4 +1,5 @@
-package com.example.regaproject
+//package com.csbkmutnb64.regaproject
+package com.csbkmutnb64v3.regaproject
 
 import android.content.Context
 import android.util.Log

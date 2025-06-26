@@ -658,17 +658,17 @@ class PoseResultPage extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.timer,
+                              Icons.calendar_today,
                               color: Colors.white.withOpacity(0.7),
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              DateFormat('HH:mm').format(date),
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 16,
-                              ),
-                            ),
+  DateFormat('dd/MM/yyyy').format(date),
+  style: TextStyle(
+    color: Colors.white.withOpacity(0.7),
+    fontSize: 16,
+  ),
+)
                           ],
                         ),
                       ),

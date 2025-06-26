@@ -1,4 +1,5 @@
-package com.example.regaproject
+//package com.csbkmutnb64.regaproject
+package com.csbkmutnb64v3.regaproject
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage

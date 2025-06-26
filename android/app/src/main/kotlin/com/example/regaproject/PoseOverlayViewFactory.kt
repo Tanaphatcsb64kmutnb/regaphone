@@ -1,5 +1,5 @@
-//D:\regaphone - Copy (2)\Rega-Project\regaproject\android\app\src\main\kotlin\com\example\regaproject\PoseOverlayViewFactory.kt
-package com.example.regaproject
+//package com.csbkmutnb64.regaproject
+package com.csbkmutnb64v3.regaproject
 
 import android.content.Context
 import android.view.View

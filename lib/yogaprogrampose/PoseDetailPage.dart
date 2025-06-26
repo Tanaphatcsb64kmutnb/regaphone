@@ -609,7 +609,7 @@ class _PoseDetailPageState extends State<PoseDetailPage>
                               color: Colors.greenAccent, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            '$poseTime นาที',
+                            '$poseTime วินาที',
                             style: const TextStyle(
                               fontSize: 16,
                               color: Colors.greenAccent,

@@ -5,10 +5,10 @@
 -DANDROID_PLATFORM=android-24
 -DANDROID_ABI=armeabi-v7a
 -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a
--DANDROID_NDK=C:\Users\Acer\AppData\Local\Android\sdk\ndk\25.1.8937393
--DCMAKE_ANDROID_NDK=C:\Users\Acer\AppData\Local\Android\sdk\ndk\25.1.8937393
--DCMAKE_TOOLCHAIN_FILE=C:\Users\Acer\AppData\Local\Android\sdk\ndk\25.1.8937393\build\cmake\android.toolchain.cmake
--DCMAKE_MAKE_PROGRAM=C:\Users\Acer\AppData\Local\Android\sdk\cmake\3.22.1\bin\ninja.exe
+-DANDROID_NDK=C:\Users\User\AppData\Local\Android\sdk\ndk\25.1.8937393
+-DCMAKE_ANDROID_NDK=C:\Users\User\AppData\Local\Android\sdk\ndk\25.1.8937393
+-DCMAKE_TOOLCHAIN_FILE=C:\Users\User\AppData\Local\Android\sdk\ndk\25.1.8937393\build\cmake\android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=C:\Users\User\AppData\Local\Android\sdk\cmake\3.22.1\bin\ninja.exe
 -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=D:\regaphone - Copy (2)\Rega-Project\regaproject\build\app\intermediates\cxx\Debug\6e4h352n\obj\armeabi-v7a
 -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=D:\regaphone - Copy (2)\Rega-Project\regaproject\build\app\intermediates\cxx\Debug\6e4h352n\obj\armeabi-v7a
 -DCMAKE_BUILD_TYPE=Debug
