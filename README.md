@@ -99,7 +99,9 @@ Rega is a mobile application designed to help users practice yoga efficiently us
 
 ## 🧑‍💻 Developers
 
-- Tanaphat T. — Project Owner & Developer
+Project Owner & Developer
+-Tanaphat Takulpukdichumpon
+-Kittitat poonnayom
 
 ---
 
